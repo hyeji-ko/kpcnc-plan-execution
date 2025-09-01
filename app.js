@@ -18,7 +18,6 @@ class SeminarPlanningApp {
 
     async init() {
         this.bindEvents();
-        this.updateFirebaseStatus(); // Firebase 상태 표시
         await this.loadInitialData();
         this.addDefaultRows();
     }
@@ -440,53 +439,7 @@ class SeminarPlanningApp {
         }, 3000);
     }
 
-    // Firebase 연결 상태 확인
-    checkFirebaseConnection() {
-        try {
-            if (typeof firebase !== 'undefined' && firebase.app) {
-                const app = firebase.app();
-                console.log('Firebase 연결 상태: 정상', app.name);
-                return true;
-            } else {
-                console.error('Firebase가 로드되지 않았습니다.');
-                return false;
-            }
-        } catch (error) {
-            console.error('Firebase 연결 확인 오류:', error);
-            return false;
-        }
-    }
 
-    // Firebase 상태를 헤더에 표시
-    updateFirebaseStatus() {
-        const isConnected = this.checkFirebaseConnection();
-        const header = document.querySelector('header');
-        
-        // 기존 상태 표시 제거
-        const existingStatus = header.querySelector('.firebase-status');
-        if (existingStatus) {
-            existingStatus.remove();
-        }
-        
-        // 상태 표시 추가
-        const statusDiv = document.createElement('div');
-        statusDiv.className = 'firebase-status flex items-center space-x-2';
-        
-        const statusIcon = document.createElement('i');
-        statusIcon.className = isConnected ? 'fas fa-database text-green-500' : 'fas fa-exclamation-triangle text-red-500';
-        
-        const statusText = document.createElement('span');
-        statusText.className = 'text-sm font-medium';
-        statusText.textContent = isConnected ? 'Firebase 연결됨' : 'Firebase 연결 안됨';
-        statusText.style.color = isConnected ? '#10b981' : '#ef4444';
-        
-        statusDiv.appendChild(statusIcon);
-        statusDiv.appendChild(statusText);
-        
-        // 헤더의 저장/불러오기 버튼 옆에 추가
-        const buttonContainer = header.querySelector('.flex.space-x-4');
-        buttonContainer.appendChild(statusDiv);
-    }
 
     exportToPDF() {
         try {
