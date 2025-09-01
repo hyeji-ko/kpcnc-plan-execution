@@ -23,6 +23,9 @@ class SeminarPlanningApp {
     }
 
     bindEvents() {
+        // 초기화 버튼
+        document.getElementById('resetBtn').addEventListener('click', () => this.resetForm());
+        
         // 저장 버튼
         document.getElementById('saveBtn').addEventListener('click', () => this.saveData());
         
@@ -596,6 +599,11 @@ class SeminarPlanningApp {
             this.searchSeminars();
         });
 
+        // 등록 버튼
+        document.getElementById('addNewBtn').addEventListener('click', () => {
+            this.addNewSeminar();
+        });
+
         // 검색 조건에서 Enter 키
         document.getElementById('searchDatetime').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -626,6 +634,13 @@ class SeminarPlanningApp {
                         return false;
                     });
                 }
+                
+                // 일시를 키값으로 내림차순 정렬
+                filteredData.sort((a, b) => {
+                    const dateA = new Date(a.datetime || '1970-01-01');
+                    const dateB = new Date(b.datetime || '1970-01-01');
+                    return dateB - dateA; // 내림차순 (최신 날짜가 먼저)
+                });
                 
                 this.displaySearchResults(filteredData);
             } else {
@@ -730,6 +745,69 @@ class SeminarPlanningApp {
         } catch (error) {
             console.error('세미나 조회 오류:', error);
             return { success: false, message: '세미나 조회 중 오류가 발생했습니다: ' + error.message };
+        }
+    }
+
+    // 새 세미나 등록
+    addNewSeminar() {
+        try {
+            // 모달 닫기
+            document.getElementById('searchModal').classList.add('hidden');
+            
+            // 메인 화면 초기화
+            this.initializeMainForm();
+            
+            this.showSuccessToast('새 세미나 등록을 위한 화면이 준비되었습니다.');
+        } catch (error) {
+            console.error('새 세미나 등록 화면 전환 오류:', error);
+            this.showErrorToast('화면 전환 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 메인 화면 초기화
+    initializeMainForm() {
+        // 현재 데이터 초기화
+        this.currentData = {
+            objective: '',
+            datetime: '',
+            location: '',
+            attendees: '',
+            timeSchedule: [],
+            attendeeList: []
+        };
+        
+        // Firebase 문서 ID 초기화
+        this.currentDocumentId = null;
+        
+        // 폼 필드 초기화
+        document.getElementById('objective').value = '';
+        document.getElementById('datetime').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('attendees').value = '';
+        
+        // 테이블 초기화
+        document.getElementById('timeTableBody').innerHTML = '';
+        document.getElementById('attendeeTableBody').innerHTML = '';
+        
+        // 기본 행 추가
+        this.addDefaultRows();
+    }
+
+    // 폼 초기화 (사용자 요청)
+    resetForm() {
+        try {
+            // 사용자 확인
+            if (!confirm('입력된 모든 데이터가 삭제됩니다. 정말 초기화하시겠습니까?')) {
+                return;
+            }
+            
+            // 메인 화면 초기화
+            this.initializeMainForm();
+            
+            this.showSuccessToast('모든 입력 필드가 초기화되었습니다.');
+        } catch (error) {
+            console.error('폼 초기화 오류:', error);
+            this.showErrorToast('초기화 중 오류가 발생했습니다.');
         }
     }
 
