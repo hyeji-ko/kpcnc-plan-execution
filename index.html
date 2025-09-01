@@ -10,108 +10,66 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%233B82F6'/><path d='M30 40h40v4H30zm0 8h40v4H30zm0 8h25v4H30z' fill='white'/></svg>">
-                             <!-- 내보내기 기능을 위한 라이브러리들 -->
-      <!-- jsPDF 라이브러리 -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-      <script>
-          // jsPDF 전역 객체 노출
-          if (typeof jsPDF !== 'undefined') {
-              window.jsPDF = jsPDF;
-              console.log('✅ jsPDF 라이브러리 로드 완료');
-          } else {
-              console.error('❌ jsPDF 라이브러리 로드 실패');
-          }
-      </script>
-      
-      <!-- jspdf-autotable 플러그인 -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-      <script>
-          // jspdf-autotable 전역 객체 노출
-          if (typeof jspdfAutotable !== 'undefined') {
-              window.jspdfAutotable = jspdfAutotable;
-              console.log('✅ jspdf-autotable 라이브러리 로드 완료');
-          } else {
-              console.error('❌ jspdf-autotable 라이브러리 로드 실패');
-          }
-      </script>
-      
-      <!-- XLSX 라이브러리 -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-      <script>
-          // XLSX 전역 객체 노출
-          if (typeof XLSX !== 'undefined') {
-              window.XLSX = XLSX;
-              console.log('✅ XLSX 라이브러리 로드 완료');
-          } else {
-              console.error('❌ XLSX 라이브러리 로드 실패');
-          }
-      </script>
-      
-      <!-- docx 라이브러리 -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.2.3/docx.min.js"></script>
-      <script>
-          // docx 전역 객체 노출
-          if (typeof docx !== 'undefined') {
-              window.docx = docx;
-              console.log('✅ docx 라이브러리 로드 완료');
-          } else {
-              console.error('❌ docx 라이브러리 로드 실패');
-          }
-      </script>
-      
-      <!-- FileSaver 라이브러리 -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-      <script>
-          // FileSaver 전역 객체 노출
-          if (typeof saveAs !== 'undefined') {
-              window.saveAs = saveAs;
-              console.log('✅ FileSaver 라이브러리 로드 완료');
-          } else {
-              console.error('❌ FileSaver 라이브러리 로드 실패');
-          }
-      </script>
-      
-      <!-- 대체 CDN (cdnjs가 실패할 경우) -->
-      <script>
-          // jsPDF 대체 로딩
-          if (typeof jsPDF === 'undefined') {
-              const script = document.createElement('script');
-              script.src = 'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js';
-              script.onload = function() {
-                  if (typeof jsPDF !== 'undefined') {
-                      window.jsPDF = jsPDF;
-                      console.log('✅ jsPDF 라이브러리 대체 CDN으로 로드 완료');
-                  }
-              };
-              document.head.appendChild(script);
-          }
-          
-          // jspdf-autotable 대체 로딩
-          if (typeof jspdfAutotable === 'undefined') {
-              const script = document.createElement('script');
-              script.src = 'https://unpkg.com/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js';
-              script.onload = function() {
-                  if (typeof jspdfAutotable !== 'undefined') {
-                      window.jspdfAutotable = jspdfAutotable;
-                      console.log('✅ jspdf-autotable 라이브러리 대체 CDN으로 로드 완료');
-                  }
-              };
-              document.head.appendChild(script);
-          }
-          
-          // docx 대체 로딩
-          if (typeof docx === 'undefined') {
-              const script = document.createElement('script');
-              script.src = 'https://unpkg.com/docx@8.2.3/build/index.js';
-              script.onload = function() {
-                  if (typeof docx !== 'undefined') {
-                      window.docx = docx;
-                      console.log('✅ docx 라이브러리 대체 CDN으로 로드 완료');
-                  }
-              };
-              document.head.appendChild(script);
-          }
-      </script>
+                                                           <!-- 내보내기 기능을 위한 라이브러리들 -->
+       <script>
+           // 라이브러리 동적 로딩 함수
+           function loadScript(url, globalVarName, successCallback, errorCallback) {
+               const script = document.createElement('script');
+               script.src = url;
+               script.onload = () => {
+                   if (typeof window[globalVarName] !== 'undefined') {
+                       console.log(`✅ ${globalVarName} 라이브러리 로드 완료 (${url})`);
+                       successCallback();
+                   } else {
+                       console.error(`❌ ${globalVarName} 라이브러리 로드 실패 (${url}) - 전역 객체 없음`);
+                       errorCallback(new Error(`${globalVarName} 전역 객체 없음`));
+                   }
+               };
+               script.onerror = () => {
+                   console.error(`❌ ${globalVarName} 라이브러리 로드 실패 (${url}) - 네트워크 오류`);
+                   errorCallback(new Error(`${globalVarName} 로드 실패`));
+               };
+               document.head.appendChild(script);
+           }
+
+           // 라이브러리 로딩 시도 (unpkg 우선, 실패 시 cdnjs)
+           const librariesToLoad = [
+               { name: 'jsPDF', global: 'jsPDF', urls: ['https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'] },
+               { name: 'jspdfAutotable', global: 'jspdfAutotable', urls: ['https://unpkg.com/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js'] },
+               { name: 'XLSX', global: 'XLSX', urls: ['https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'] },
+               { name: 'docx', global: 'docx', urls: ['https://unpkg.com/docx@8.2.3/build/index.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/docx/8.2.3/docx.min.js'] },
+               { name: 'FileSaver', global: 'saveAs', urls: ['https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'] }
+           ];
+
+           let loadedLibraries = {};
+
+           function tryLoadLibrary(lib, urlIndex = 0) {
+               if (urlIndex >= lib.urls.length) {
+                   console.error(`❌ 모든 시도 실패: ${lib.name} 라이브러리를 불러올 수 없습니다.`);
+                   loadedLibraries[lib.global] = false;
+                   return Promise.resolve(false); // 실패했음을 알림
+               }
+
+               return new Promise(resolve => {
+                   loadScript(lib.urls[urlIndex], lib.global,
+                       () => {
+                           loadedLibraries[lib.global] = true;
+                           resolve(true);
+                       },
+                       (error) => {
+                           console.warn(`재시도: ${lib.name} 라이브러리 로드 실패 (${lib.urls[urlIndex]}), 다음 CDN 시도...`);
+                           tryLoadLibrary(lib, urlIndex + 1).then(resolve);
+                       }
+                   );
+               });
+           }
+
+           // 모든 라이브러리 로드 시작
+           Promise.all(librariesToLoad.map(lib => tryLoadLibrary(lib))).then(() => {
+               console.log('모든 라이브러리 로딩 시도 완료. 최종 상태:', loadedLibraries);
+               window.loadedLibrariesStatus = loadedLibraries;
+           });
+       </script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Header -->
