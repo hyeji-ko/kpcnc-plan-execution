@@ -24,20 +24,20 @@ class SeminarPlanningApp {
     checkLibraries() {
         const libraries = {
             jsPDF: typeof jsPDF !== 'undefined' || typeof window.jsPDF !== 'undefined',
-            XLSX: typeof XLSX !== 'undefined',
-            docx: typeof docx !== 'undefined'
+            jspdfAutotable: typeof jspdfAutotable !== 'undefined' || typeof window.jspdfAutotable !== 'undefined',
+            XLSX: typeof XLSX !== 'undefined' || typeof window.XLSX !== 'undefined',
+            docx: typeof docx !== 'undefined' || typeof window.docx !== 'undefined',
+            saveAs: typeof saveAs !== 'undefined' || typeof window.saveAs !== 'undefined'
         };
         
         console.log('라이브러리 로딩 상태:', libraries);
         
-        if (!libraries.jsPDF) {
-            console.warn('jsPDF 라이브러리가 로드되지 않았습니다.');
-        }
-        if (!libraries.XLSX) {
-            console.warn('XLSX 라이브러리가 로드되지 않았습니다.');
-        }
-        if (!libraries.docx) {
-            console.warn('docx 라이브러리가 로드되지 않았습니다.');
+        for (const lib in libraries) {
+            if (!libraries[lib]) {
+                console.warn(`경고: ${lib} 라이브러리가 로드되지 않았습니다.`);
+            } else {
+                console.log(`✅ ${lib} 라이브러리 로드 완료`);
+            }
         }
     }
 
@@ -614,7 +614,7 @@ class SeminarPlanningApp {
         // 모달 이벤트 바인딩
         this.bindSearchModalEvents();
         
-        // 기본 검색 (전체 조회)
+        // 전체 데이터 조회
         this.searchSeminars();
     }
 
@@ -625,142 +625,15 @@ class SeminarPlanningApp {
             document.getElementById('searchModal').classList.add('hidden');
         });
 
-        // 검색 버튼
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            this.searchSeminars();
-        });
-
         // 등록 버튼
         document.getElementById('addNewBtn').addEventListener('click', () => {
             this.addNewSeminar();
         });
-
-        // 년월 선택기 이벤트 바인딩
-        this.bindYearMonthPickerEvents();
     }
 
-    // 년월 선택기 이벤트 바인딩
-    bindYearMonthPickerEvents() {
-        const searchYearMonth = document.getElementById('searchYearMonth');
-        const yearMonthPicker = document.getElementById('yearMonthPicker');
-        const prevYear = document.getElementById('prevYear');
-        const nextYear = document.getElementById('nextYear');
-        const monthBtns = document.querySelectorAll('.month-btn');
 
-        // 년월 선택 버튼 클릭
-        searchYearMonth.addEventListener('click', () => {
-            yearMonthPicker.classList.toggle('hidden');
-            this.populateYearList();
-        });
 
-        // 년도 이전/다음 버튼
-        prevYear.addEventListener('click', () => {
-            this.changeYearRange(-5);
-        });
-
-        nextYear.addEventListener('click', () => {
-            this.changeYearRange(5);
-        });
-
-        // 월 선택
-        monthBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const month = btn.dataset.month;
-                this.selectMonth(month);
-                yearMonthPicker.classList.add('hidden');
-            });
-        });
-
-        // 외부 클릭 시 닫기
-        document.addEventListener('click', (e) => {
-            if (!searchYearMonth.contains(e.target) && !yearMonthPicker.contains(e.target)) {
-                yearMonthPicker.classList.add('hidden');
-            }
-        });
-
-        // 현재 년월로 초기화
-        this.initializeCurrentYearMonth();
-        this.setCurrentMonthButton();
-    }
-
-    // 현재 년월로 초기화
-    initializeCurrentYearMonth() {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-        
-        this.selectedYear = currentYear;
-        this.selectedMonth = currentMonth;
-        
-        this.updateSelectedYearMonthDisplay();
-        this.populateYearList();
-    }
-
-    // 선택된 년월 표시 업데이트
-    updateSelectedYearMonthDisplay() {
-        const display = document.getElementById('selectedYearMonth');
-        display.textContent = `${this.selectedYear}년 ${this.selectedMonth}월`;
-    }
-
-    // 년도 목록 생성
-    populateYearList() {
-        const yearList = document.getElementById('yearList');
-        const startYear = Math.max(2020, this.selectedYear - 5);
-        const endYear = Math.min(2030, this.selectedYear + 5);
-        
-        yearList.innerHTML = '';
-        
-        for (let year = startYear; year <= endYear; year++) {
-            const yearBtn = document.createElement('button');
-            yearBtn.type = 'button';
-            yearBtn.className = `w-full p-2 text-left hover:bg-blue-50 rounded ${year === this.selectedYear ? 'bg-blue-500 text-white' : ''}`;
-            yearBtn.textContent = year;
-            yearBtn.addEventListener('click', () => {
-                this.selectYear(year);
-            });
-            yearList.appendChild(yearBtn);
-        }
-    }
-
-    // 년도 선택
-    selectYear(year) {
-        this.selectedYear = year;
-        this.updateSelectedYearMonthDisplay();
-        this.populateYearList();
-    }
-
-    // 월 선택
-    selectMonth(month) {
-        this.selectedMonth = month;
-        this.updateSelectedYearMonthDisplay();
-        
-        // 월 버튼 스타일 업데이트
-        document.querySelectorAll('.month-btn').forEach(btn => {
-            btn.classList.remove('bg-blue-500', 'text-white');
-            if (btn.dataset.month === month) {
-                btn.classList.add('bg-blue-500', 'text-white');
-            }
-        });
-    }
-
-    // 현재 월 버튼 기본 선택 상태 설정
-    setCurrentMonthButton() {
-        const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
-        document.querySelectorAll('.month-btn').forEach(btn => {
-            if (btn.dataset.month === currentMonth) {
-                btn.classList.add('bg-blue-500', 'text-white');
-            }
-        });
-    }
-
-    // 년도 범위 변경
-    changeYearRange(direction) {
-        const yearList = document.getElementById('yearList');
-        const currentScrollTop = yearList.scrollTop;
-        yearList.scrollTop = currentScrollTop + (direction * 100);
-    }
-
-    // 세미나 검색
+    // 세미나 조회 (전체 데이터)
     async searchSeminars() {
         try {
             this.showLoading(true);
@@ -768,83 +641,102 @@ class SeminarPlanningApp {
             const result = await loadAllPlans();
             
             if (result.success) {
-                let filteredData = result.data;
-                
-                // 년월 필터링
-                if (this.selectedYear && this.selectedMonth) {
-                    const searchYear = this.selectedYear;
-                    const searchMonth = this.selectedMonth;
-                    
-                    filteredData = result.data.filter(item => {
-                        if (item.datetime) {
-                            const itemDate = new Date(item.datetime);
-                            const itemYear = itemDate.getFullYear();
-                            const itemMonth = String(itemDate.getMonth() + 1).padStart(2, '0');
-                            
-                            return itemYear === searchYear && itemMonth === searchMonth;
-                        }
-                        return false;
-                    });
-                }
-                
                 // 일시를 키값으로 내림차순 정렬
-                filteredData.sort((a, b) => {
+                const sortedData = result.data.sort((a, b) => {
                     const dateA = new Date(a.datetime || '1970-01-01');
                     const dateB = new Date(b.datetime || '1970-01-01');
                     return dateB - dateA; // 내림차순 (최신 날짜가 먼저)
                 });
                 
-                this.displaySearchResults(filteredData);
+                this.displaySearchResults(sortedData);
             } else {
                 this.showErrorToast(result.message);
             }
         } catch (error) {
-            console.error('검색 오류:', error);
-            this.showErrorToast('검색 중 오류가 발생했습니다.');
+            console.error('조회 오류:', error);
+            this.showErrorToast('조회 중 오류가 발생했습니다.');
         } finally {
             this.showLoading(false);
         }
     }
 
-    // 검색 결과 표시
+        // 검색 결과 표시
     displaySearchResults(data) {
         const tbody = document.getElementById('searchResultBody');
         tbody.innerHTML = '';
         
-                 if (data.length === 0) {
-             tbody.innerHTML = `
-                 <tr>
-                     <td colspan="5" class="px-4 py-8 text-center text-gray-500">
-                         조회된 결과가 없습니다.
-                     </td>
-                 </tr>
-             `;
-             return;
-         }
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-8 py-16 text-center">
+                        <div class="flex flex-col items-center space-y-4">
+                            <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-search text-3xl text-blue-400"></i>
+                            </div>
+                            <div class="text-center">
+                                <h3 class="text-xl font-semibold text-gray-700 mb-2">조회된 결과가 없습니다</h3>
+                                <p class="text-gray-500">새로운 세미나를 등록해보세요</p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
         
-                 data.forEach((item, index) => {
-             const row = document.createElement('tr');
-             row.className = 'table-row-hover cursor-pointer';
-             row.onclick = () => this.loadSeminarDetail(item.id);
-             
-             const session = item.session || '미입력';
-             const datetime = item.datetime ? new Date(item.datetime).toLocaleString('ko-KR') : '미입력';
-             const objective = item.objective || '미입력';
-             const location = item.location || '미입력';
-             const attendees = item.attendees || '미입력';
-             
-             row.innerHTML = `
-                 <td class="px-4 py-3 border-b">${session}</td>
-                 <td class="px-4 py-3 border-b text-blue-600 hover:text-blue-800 font-medium">
-                     ${datetime}
-                 </td>
-                 <td class="px-4 py-3 border-b">${objective}</td>
-                 <td class="px-4 py-3 border-b">${location}</td>
-                 <td class="px-4 py-3 border-b">${attendees}</td>
-             `;
-             
-             tbody.appendChild(row);
-         });
+        data.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer transition-all duration-200 group';
+            row.onclick = () => this.loadSeminarDetail(item.id);
+            
+            const session = item.session || '미입력';
+            const datetime = item.datetime ? new Date(item.datetime).toLocaleString('ko-KR') : '미입력';
+            const objective = item.objective || '미입력';
+            const location = item.location || '미입력';
+            const attendees = item.attendees || '미입력';
+            
+            // 회차 배지 스타일
+            const sessionBadge = session !== '미입력' ? 
+                `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200">
+                    <i class="fas fa-hashtag mr-1"></i>${session}
+                </span>` : 
+                `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                    <i class="fas fa-minus mr-1"></i>미입력
+                </span>`;
+            
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    ${sessionBadge}
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center space-x-2 group-hover:text-blue-600 transition-colors duration-200">
+                        <i class="fas fa-calendar-alt text-blue-400 group-hover:text-blue-600"></i>
+                        <span class="font-medium">${datetime}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="max-w-xs">
+                        <p class="text-gray-800 truncate group-hover:text-gray-900 transition-colors duration-200" title="${objective}">
+                            ${objective}
+                        </p>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-map-marker-alt text-red-400"></i>
+                        <span class="text-gray-700">${location}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-users text-green-400"></i>
+                        <span class="text-gray-700">${attendees}</span>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
     }
 
     // 세미나 상세 정보 로드
@@ -1087,11 +979,11 @@ class SeminarPlanningApp {
         else this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
         
         rows.sort((a, b) => {
-            const aText = a.children[0].textContent;
-            const bText = b.children[0].textContent;
+            const aText = a.children[1].textContent;
+            const bText = b.children[1].textContent;
             
-            if (aText === '조회된 결과가 없습니다.') return 1;
-            if (bText === '조회된 결과가 없습니다.') return -1;
+            if (aText.includes('조회된 결과가 없습니다')) return 1;
+            if (bText.includes('조회된 결과가 없습니다')) return -1;
             
             const aDate = new Date(aText);
             const bDate = new Date(bText);
@@ -1108,8 +1000,14 @@ class SeminarPlanningApp {
         
         // 정렬 방향 표시 업데이트
         const header = document.querySelector('th[onclick="app.sortByDatetime()"]');
-        const icon = header.querySelector('i');
-        icon.className = this.sortDirection === 'asc' ? 'fas fa-sort-up ml-1' : 'fas fa-sort-down ml-1';
+        const icon = header.querySelector('.fas.fa-sort');
+        if (icon) {
+            icon.className = this.sortDirection === 'asc' ? 'fas fa-sort-up text-blue-600' : 'fas fa-sort-down text-blue-600';
+        }
+        
+        // 정렬 완료 토스트 표시
+        const direction = this.sortDirection === 'asc' ? '오름차순' : '내림차순';
+        this.showSuccessToast(`일시 기준 ${direction}으로 정렬되었습니다.`);
     }
 
 
@@ -1122,10 +1020,10 @@ class SeminarPlanningApp {
             let jsPDFClass;
             if (typeof jsPDF !== 'undefined') {
                 jsPDFClass = jsPDF;
+                console.log('jsPDF 직접 접근 성공');
             } else if (typeof window.jsPDF !== 'undefined') {
                 jsPDFClass = window.jsPDF;
-            } else if (typeof window.jsPDF !== 'undefined' && window.jsPDF.jsPDF) {
-                jsPDFClass = window.jsPDF.jsPDF;
+                console.log('window.jsPDF 접근 성공');
             } else {
                 throw new Error('jsPDF 라이브러리를 불러올 수 없습니다. 페이지를 새로고침하거나 라이브러리 로딩을 확인해주세요.');
             }
@@ -1219,12 +1117,19 @@ class SeminarPlanningApp {
             this.showLoading(true);
             
             // XLSX 라이브러리 확인
-            if (typeof XLSX === 'undefined') {
+            let XLSXClass;
+            if (typeof XLSX !== 'undefined') {
+                XLSXClass = XLSX;
+                console.log('XLSX 직접 접근 성공');
+            } else if (typeof window.XLSX !== 'undefined') {
+                XLSXClass = window.XLSX;
+                console.log('window.XLSX 접근 성공');
+            } else {
                 throw new Error('XLSX 라이브러리를 불러올 수 없습니다.');
             }
 
             // 워크북 생성
-            const wb = XLSX.utils.book_new();
+            const wb = XLSXClass.utils.book_new();
             
             // 기본 정보 시트
             const basicInfoData = [
@@ -1266,12 +1171,12 @@ class SeminarPlanningApp {
                 ]);
             });
             
-            const basicInfoSheet = XLSX.utils.aoa_to_sheet(basicInfoData);
-            XLSX.utils.book_append_sheet(wb, basicInfoSheet, '세미나 실행계획');
+            const basicInfoSheet = XLSXClass.utils.aoa_to_sheet(basicInfoData);
+            XLSXClass.utils.book_append_sheet(wb, basicInfoSheet, '세미나 실행계획');
             
             // 파일 저장
             const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            XLSXClass.writeFile(wb, fileName);
             
             this.showSuccessToast('Excel 파일이 성공적으로 내보내졌습니다.');
         } catch (error) {
@@ -1287,11 +1192,18 @@ class SeminarPlanningApp {
             this.showLoading(true);
             
             // docx 라이브러리 확인
-            if (typeof docx === 'undefined') {
+            let docxClass;
+            if (typeof docx !== 'undefined') {
+                docxClass = docx;
+                console.log('docx 직접 접근 성공');
+            } else if (typeof window.docx !== 'undefined') {
+                docxClass = window.docx;
+                console.log('window.docx 접근 성공');
+            } else {
                 throw new Error('docx 라이브러리를 불러올 수 없습니다.');
             }
 
-            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docxClass;
             
             // 문서 생성
             const doc = new Document({
@@ -1429,9 +1341,16 @@ class SeminarPlanningApp {
             // 파일 생성 및 저장
             const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.docx`;
             
-            docx.Packer.toBlob(doc).then(blob => {
+            docxClass.Packer.toBlob(doc).then(blob => {
+                let saveAsFunc;
                 if (typeof saveAs !== 'undefined') {
-                    saveAs(blob, fileName);
+                    saveAsFunc = saveAs;
+                } else if (typeof window.saveAs !== 'undefined') {
+                    saveAsFunc = window.saveAs;
+                }
+                
+                if (saveAsFunc) {
+                    saveAsFunc(blob, fileName);
                     this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다.');
                 } else {
                     // FileSaver.js가 없는 경우 직접 다운로드
