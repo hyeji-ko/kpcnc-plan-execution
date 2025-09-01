@@ -27,18 +27,30 @@ class SeminarPlanningApp {
 
     // 라이브러리 로딩 상태 확인
     async checkLibraries() {
-        // 라이브러리 로딩 완료까지 대기
+        console.log('🔍 라이브러리 로딩 상태 확인 시작...');
+        
+        // LibraryLoader가 준비될 때까지 대기
         let attempts = 0;
-        const maxAttempts = 50; // 최대 5초 대기
+        const maxAttempts = 100; // 최대 10초 대기
         
         while (attempts < maxAttempts) {
-            if (window.loadedLibrariesStatus && Object.keys(window.loadedLibrariesStatus).length > 0) {
-                break;
+            if (window.LibraryLoader && window.loadedLibrariesStatus) {
+                const statusKeys = Object.keys(window.loadedLibrariesStatus);
+                if (statusKeys.length === 5) { // 5개 라이브러리 모두 상태 확인됨
+                    console.log('✅ LibraryLoader 준비 완료');
+                    break;
+                }
             }
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
         
+        if (attempts === maxAttempts) {
+            console.error('❌ LibraryLoader 준비 시간 초과');
+            return;
+        }
+        
+        // 라이브러리 상태 확인
         const libraries = {
             jsPDF: this.getLibrary('jsPDF'),
             jspdfAutotable: this.getLibrary('jspdfAutotable'),
@@ -49,6 +61,28 @@ class SeminarPlanningApp {
         
         console.log('📚 라이브러리 로딩 상태:', libraries);
         
+        // 로딩 실패한 라이브러리 재시도
+        const failedLibraries = Object.entries(libraries).filter(([name, loaded]) => !loaded);
+        if (failedLibraries.length > 0) {
+            console.log(`🔄 로딩 실패한 라이브러리 재시도: ${failedLibraries.map(([name]) => name).join(', ')}`);
+            
+            for (const [libName] of failedLibraries) {
+                try {
+                    await window.LibraryLoader.reloadLibrary(libName);
+                    // 재로딩 후 상태 업데이트
+                    window.loadedLibrariesStatus[libName] = window.LibraryLoader.isLibraryLoaded(libName);
+                } catch (error) {
+                    console.error(`❌ ${libName} 재로딩 실패:`, error);
+                }
+            }
+            
+            // 재시도 후 상태 재확인
+            Object.keys(libraries).forEach(name => {
+                libraries[name] = this.getLibrary(name);
+            });
+        }
+        
+        // 최종 상태 출력
         for (const lib in libraries) {
             if (!libraries[lib]) {
                 console.warn(`⚠️ 경고: ${lib} 라이브러리가 로드되지 않았습니다.`);
@@ -60,14 +94,28 @@ class SeminarPlanningApp {
     
     // 라이브러리 존재 여부 확인
     getLibrary(name) {
+        // LibraryLoader 상태 확인
+        if (window.LibraryLoader && window.LibraryLoader.isLibraryLoaded(name)) {
+            return true;
+        }
+        
+        // 전역 상태 확인
         if (window.loadedLibrariesStatus && typeof window.loadedLibrariesStatus[name] !== 'undefined') {
             return window.loadedLibrariesStatus[name];
         }
+        
+        // 직접 전역 객체 확인
         return typeof window[name] !== 'undefined';
     }
 
     // 라이브러리 인스턴스 반환 (전역 객체 또는 window 객체에서)
     getLibraryInstance(name) {
+        // LibraryLoader 상태 확인
+        if (window.LibraryLoader && !window.LibraryLoader.isLibraryLoaded(name)) {
+            console.warn(`⚠️ ${name} 라이브러리가 로드되지 않았습니다.`);
+            return null;
+        }
+        
         // window 객체에서 직접 확인
         if (typeof window[name] !== 'undefined') {
             console.log(`🎯 ${name} 라이브러리 (window.${name}) 접근 성공`);
@@ -92,6 +140,12 @@ class SeminarPlanningApp {
         if (name === 'saveAs' && typeof saveAs !== 'undefined') {
             console.log(`🎯 ${name} 라이브러리 (direct saveAs) 접근 성공`);
             return saveAs;
+        }
+        
+        // jsPDF 특별 처리
+        if (name === 'jsPDF' && window.jspdf?.jsPDF) {
+            console.log(`🎯 ${name} 라이브러리 (window.jspdf.jsPDF) 접근 성공`);
+            return window.jspdf.jsPDF;
         }
         
         console.error(`❌ ${name} 라이브러리를 찾을 수 없습니다.`);
