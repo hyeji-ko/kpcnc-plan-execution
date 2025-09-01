@@ -19,8 +19,8 @@ const db = firebase.firestore();
 // Firebase 설정 상태 확인
 console.log('Firebase initialized successfully');
 
-// 개발 환경에서는 로컬 스토리지를 사용하도록 설정
-const useLocalStorage = true; // Firebase를 사용하려면 false로 설정
+// Firebase를 기본 저장소로 사용
+const useLocalStorage = false; // Firebase 사용
 
 // 데이터 저장 함수 (로컬 스토리지 또는 Firebase)
 async function saveData(data) {
@@ -114,6 +114,39 @@ async function deleteData(id) {
     }
 }
 
+// 모든 세미나 계획 목록 불러오기
+async function loadAllPlans() {
+    try {
+        if (useLocalStorage) {
+            // 로컬 스토리지에서는 하나의 계획만 지원
+            const data = localStorage.getItem('seminarPlan');
+            if (data) {
+                return { success: true, data: [JSON.parse(data)] };
+            } else {
+                return { success: true, data: [] };
+            }
+        } else {
+            // Firebase에서 모든 계획 불러오기
+            const snapshot = await db.collection('seminarPlans')
+                .orderBy('createdAt', 'desc')
+                .get();
+            
+            const plans = [];
+            snapshot.forEach(doc => {
+                plans.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            return { success: true, data: plans };
+        }
+    } catch (error) {
+        console.error('모든 계획 불러오기 오류:', error);
+        return { success: false, message: '계획 목록 불러오기 중 오류가 발생했습니다: ' + error.message };
+    }
+}
+
 // Firebase 설정 확인
 function checkFirebaseStatus() {
     if (useLocalStorage) {
@@ -130,6 +163,13 @@ function checkFirebaseStatus() {
         }
     }
 }
+
+// 전역 함수로 노출 (HTML에서 호출하기 위해)
+window.saveData = saveData;
+window.loadData = loadData;
+window.updateData = updateData;
+window.deleteData = deleteData;
+window.loadAllPlans = loadAllPlans;
 
 // 페이지 로드 시 Firebase 상태 확인
 document.addEventListener('DOMContentLoaded', function() {
