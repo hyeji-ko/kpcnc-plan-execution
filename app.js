@@ -14,7 +14,31 @@ class SeminarPlanningApp {
         
         this.currentDocumentId = null; // Firebase 문서 ID 저장
         
+        // 라이브러리 로딩 상태 확인
+        this.checkLibraries();
+        
         this.init();
+    }
+
+    // 라이브러리 로딩 상태 확인
+    checkLibraries() {
+        const libraries = {
+            jsPDF: typeof jsPDF !== 'undefined' || typeof window.jsPDF !== 'undefined',
+            XLSX: typeof XLSX !== 'undefined',
+            docx: typeof docx !== 'undefined'
+        };
+        
+        console.log('라이브러리 로딩 상태:', libraries);
+        
+        if (!libraries.jsPDF) {
+            console.warn('jsPDF 라이브러리가 로드되지 않았습니다.');
+        }
+        if (!libraries.XLSX) {
+            console.warn('XLSX 라이브러리가 로드되지 않았습니다.');
+        }
+        if (!libraries.docx) {
+            console.warn('docx 라이브러리가 로드되지 않았습니다.');
+        }
     }
 
     async init() {
@@ -865,19 +889,71 @@ class SeminarPlanningApp {
     // 폼 초기화 (사용자 요청)
     resetForm() {
         try {
-            // 사용자 확인
-            if (!confirm('입력된 모든 데이터가 삭제됩니다. 정말 초기화하시겠습니까?')) {
-                return;
-            }
-            
-            // 메인 화면 초기화
-            this.initializeMainForm();
+            // 입력 필드만 초기화 (기존 데이터는 유지)
+            this.clearInputFields();
             
             this.showSuccessToast('모든 입력 필드가 초기화되었습니다.');
         } catch (error) {
             console.error('폼 초기화 오류:', error);
             this.showErrorToast('초기화 중 오류가 발생했습니다.');
         }
+    }
+
+    // 입력 필드만 초기화 (기존 데이터 유지)
+    clearInputFields() {
+        // 회차 필드 초기화
+        document.getElementById('sessionSelect').value = '';
+        document.getElementById('sessionInput').value = '';
+        document.getElementById('sessionSelect').style.display = 'block';
+        document.getElementById('sessionInput').classList.add('hidden');
+        
+        // 기본 정보 필드 초기화
+        document.getElementById('objective').value = '';
+        document.getElementById('datetime').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('attendees').value = '';
+        
+        // 테이블 입력 필드 초기화
+        this.clearTableInputs();
+        
+        // 현재 데이터의 입력 필드 값만 초기화 (저장된 데이터는 유지)
+        this.currentData.session = '';
+        this.currentData.objective = '';
+        this.currentData.datetime = '';
+        this.currentData.location = '';
+        this.currentData.attendees = '';
+    }
+
+    // 테이블의 입력 필드만 초기화
+    clearTableInputs() {
+        // 시간 계획 테이블 입력 필드 초기화
+        const timeRows = document.getElementById('timeTableBody').children;
+        Array.from(timeRows).forEach(row => {
+            const inputs = row.querySelectorAll('input, select');
+            if (inputs[0]) inputs[0].value = ''; // 구분
+            if (inputs[1]) inputs[1].value = ''; // 주요 내용
+            if (inputs[2]) inputs[2].value = ''; // 시간
+            if (inputs[3]) inputs[3].value = ''; // 담당
+        });
+        
+        // 참석자 테이블 입력 필드 초기화
+        const attendeeRows = document.getElementById('attendeeTableBody').children;
+        Array.from(attendeeRows).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const select = row.querySelector('select');
+            
+            if (inputs[0]) inputs[0].value = ''; // 성명
+            if (inputs[1]) inputs[1].value = ''; // 직급
+            if (select) {
+                select.value = '';
+                select.style.display = 'block';
+            }
+            if (inputs[2]) {
+                inputs[2].value = '';
+                inputs[2].classList.add('hidden');
+            }
+            if (inputs[3]) inputs[3].value = ''; // 업무
+        });
     }
 
     // 일시별 정렬
@@ -921,12 +997,19 @@ class SeminarPlanningApp {
         try {
             this.showLoading(true);
             
-            // jsPDF 라이브러리 확인
-            if (typeof jsPDF === 'undefined') {
-                throw new Error('jsPDF 라이브러리를 불러올 수 없습니다.');
+            // jsPDF 라이브러리 확인 및 다양한 접근 방법 시도
+            let jsPDFClass;
+            if (typeof jsPDF !== 'undefined') {
+                jsPDFClass = jsPDF;
+            } else if (typeof window.jsPDF !== 'undefined') {
+                jsPDFClass = window.jsPDF;
+            } else if (typeof window.jsPDF !== 'undefined' && window.jsPDF.jsPDF) {
+                jsPDFClass = window.jsPDF.jsPDF;
+            } else {
+                throw new Error('jsPDF 라이브러리를 불러올 수 없습니다. 페이지를 새로고침하거나 라이브러리 로딩을 확인해주세요.');
             }
 
-            const doc = new jsPDF();
+            const doc = new jsPDFClass();
             
             // 제목 추가
             doc.setFontSize(20);
@@ -999,6 +1082,11 @@ class SeminarPlanningApp {
             this.showSuccessToast('PDF가 성공적으로 내보내졌습니다.');
         } catch (error) {
             console.error('PDF 내보내기 오류:', error);
+            console.error('jsPDF 상태:', {
+                jsPDF: typeof jsPDF,
+                windowJsPDF: typeof window.jsPDF,
+                windowJsPDFJsPDF: typeof window.jsPDF !== 'undefined' ? typeof window.jsPDF.jsPDF : 'undefined'
+            });
             this.showErrorToast(`PDF 내보내기 실패: ${error.message}`);
         } finally {
             this.showLoading(false);
