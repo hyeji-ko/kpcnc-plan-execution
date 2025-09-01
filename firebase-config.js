@@ -121,8 +121,11 @@ async function loadAllPlans() {
             // 로컬 스토리지에서는 하나의 계획만 지원
             const data = localStorage.getItem('seminarPlan');
             if (data) {
-                return { success: true, data: [JSON.parse(data)] };
+                const parsedData = JSON.parse(data);
+                console.log('📁 로컬 스토리지에서 로드된 계획:', parsedData);
+                return { success: true, data: [parsedData] };
             } else {
+                console.log('📁 로컬 스토리지에 저장된 계획이 없습니다.');
                 return { success: true, data: [] };
             }
         } else {
@@ -133,12 +136,15 @@ async function loadAllPlans() {
             
             const plans = [];
             snapshot.forEach(doc => {
+                const docData = doc.data();
+                console.log(`🔥 Firebase 문서 ${doc.id}:`, docData);
                 plans.push({
                     id: doc.id,
-                    ...doc.data()
+                    ...docData
                 });
             });
             
+            console.log(`🔥 Firebase에서 총 ${plans.length}개의 계획을 로드했습니다.`);
             return { success: true, data: plans };
         }
     } catch (error) {
