@@ -63,9 +63,11 @@ class SeminarPlanningApp {
     getLibraryInstance(name) {
         switch(name) {
             case 'jsPDF':
-                return jsPDF || window.jsPDF;
+                // jsPDF는 UMD 모듈로 로드되므로 window.jsPDF를 사용
+                return window.jsPDF || jsPDF;
             case 'jspdfAutotable':
-                return jspdfAutotable || window.jspdfAutotable;
+                // jspdf-autotable도 UMD 모듈
+                return window.jspdfAutotable || jspdfAutotable;
             case 'XLSX':
                 return XLSX || window.XLSX;
             case 'docx':
@@ -1196,18 +1198,29 @@ class SeminarPlanningApp {
                     item.responsible || ''
                 ]);
                 
-                doc.autoTable({
-                    startY: 115,
-                    head: [['구분', '주요 내용', '시간', '담당']],
-                    body: timeTableData,
-                    theme: 'grid',
-                    headStyles: { fillColor: [59, 130, 246] }
-                });
+                // jspdf-autotable 플러그인 사용
+                const jspdfAutotable = this.getLibraryInstance('jspdfAutotable');
+                if (jspdfAutotable) {
+                    doc.autoTable({
+                        startY: 115,
+                        head: [['구분', '주요 내용', '시간', '담당']],
+                        body: timeTableData,
+                        theme: 'grid',
+                        headStyles: { fillColor: [59, 130, 246] }
+                    });
+                } else {
+                    // 플러그인이 없는 경우 간단한 테이블로 대체
+                    let y = 115;
+                    timeTableData.forEach(row => {
+                        doc.text(row.join(' | '), 20, y);
+                        y += 7;
+                    });
+                }
             }
             
             // 참석자 명단 테이블
             if (this.currentData.attendeeList.length > 0) {
-                const lastY = doc.lastAutoTable.finalY + 10;
+                const lastY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 160;
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.text('세미나 참석 명단', 20, lastY);
@@ -1220,13 +1233,24 @@ class SeminarPlanningApp {
                     item.work || ''
                 ]);
                 
-                doc.autoTable({
-                    startY: lastY + 5,
-                    head: [['No', '성명', '직급', '소속', '업무']],
-                    body: attendeeTableData,
-                    theme: 'grid',
-                    headStyles: { fillColor: [147, 51, 234] }
-                });
+                // jspdf-autotable 플러그인 사용
+                const jspdfAutotable = this.getLibraryInstance('jspdfAutotable');
+                if (jspdfAutotable) {
+                    doc.autoTable({
+                        startY: lastY + 5,
+                        head: [['No', '성명', '직급', '소속', '업무']],
+                        body: attendeeTableData,
+                        theme: 'grid',
+                        headStyles: { fillColor: [147, 51, 234] }
+                    });
+                } else {
+                    // 플러그인이 없는 경우 간단한 테이블로 대체
+                    let y = lastY + 5;
+                    attendeeTableData.forEach(row => {
+                        doc.text(row.join(' | '), 20, y);
+                        y += 7;
+                    });
+                }
             }
             
             // 파일 저장
