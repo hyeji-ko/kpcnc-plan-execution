@@ -3,6 +3,7 @@
 class SeminarPlanningApp {
     constructor() {
         this.currentData = {
+            session: '',
             objective: '',
             datetime: '',
             location: '',
@@ -80,9 +81,14 @@ class SeminarPlanningApp {
     populateForm() {
         // 기본 정보 채우기
         Object.keys(this.currentData).forEach(key => {
-            const element = document.getElementById(key);
-            if (element && typeof this.currentData[key] === 'string') {
-                element.value = this.currentData[key];
+            if (key === 'session') {
+                // 회차 필드 특별 처리
+                this.populateSessionField();
+            } else {
+                const element = document.getElementById(key);
+                if (element && typeof this.currentData[key] === 'string') {
+                    element.value = this.currentData[key];
+                }
             }
         });
 
@@ -486,6 +492,7 @@ class SeminarPlanningApp {
 
     collectFormData() {
         // 기본 정보 수집
+        this.currentData.session = this.currentData.session || '';
         this.currentData.objective = document.getElementById('objective').value;
         this.currentData.datetime = document.getElementById('datetime').value;
         this.currentData.location = document.getElementById('location').value;
@@ -659,38 +666,40 @@ class SeminarPlanningApp {
         const tbody = document.getElementById('searchResultBody');
         tbody.innerHTML = '';
         
-        if (data.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
-                        조회된 결과가 없습니다.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
+                 if (data.length === 0) {
+             tbody.innerHTML = `
+                 <tr>
+                     <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                         조회된 결과가 없습니다.
+                     </td>
+                 </tr>
+             `;
+             return;
+         }
         
-        data.forEach((item, index) => {
-            const row = document.createElement('tr');
-            row.className = 'table-row-hover cursor-pointer';
-            row.onclick = () => this.loadSeminarDetail(item.id);
-            
-            const datetime = item.datetime ? new Date(item.datetime).toLocaleString('ko-KR') : '미입력';
-            const objective = item.objective || '미입력';
-            const location = item.location || '미입력';
-            const attendees = item.attendees || '미입력';
-            
-            row.innerHTML = `
-                <td class="px-4 py-3 border-b text-blue-600 hover:text-blue-800 font-medium">
-                    ${datetime}
-                </td>
-                <td class="px-4 py-3 border-b">${objective}</td>
-                <td class="px-4 py-3 border-b">${location}</td>
-                <td class="px-4 py-3 border-b">${attendees}</td>
-            `;
-            
-            tbody.appendChild(row);
-        });
+                 data.forEach((item, index) => {
+             const row = document.createElement('tr');
+             row.className = 'table-row-hover cursor-pointer';
+             row.onclick = () => this.loadSeminarDetail(item.id);
+             
+             const session = item.session || '미입력';
+             const datetime = item.datetime ? new Date(item.datetime).toLocaleString('ko-KR') : '미입력';
+             const objective = item.objective || '미입력';
+             const location = item.location || '미입력';
+             const attendees = item.attendees || '미입력';
+             
+             row.innerHTML = `
+                 <td class="px-4 py-3 border-b">${session}</td>
+                 <td class="px-4 py-3 border-b text-blue-600 hover:text-blue-800 font-medium">
+                     ${datetime}
+                 </td>
+                 <td class="px-4 py-3 border-b">${objective}</td>
+                 <td class="px-4 py-3 border-b">${location}</td>
+                 <td class="px-4 py-3 border-b">${attendees}</td>
+             `;
+             
+             tbody.appendChild(row);
+         });
     }
 
     // 세미나 상세 정보 로드
@@ -768,6 +777,7 @@ class SeminarPlanningApp {
     initializeMainForm() {
         // 현재 데이터 초기화
         this.currentData = {
+            session: '',
             objective: '',
             datetime: '',
             location: '',
@@ -780,6 +790,10 @@ class SeminarPlanningApp {
         this.currentDocumentId = null;
         
         // 폼 필드 초기화
+        document.getElementById('sessionSelect').value = '';
+        document.getElementById('sessionInput').value = '';
+        document.getElementById('sessionSelect').style.display = 'block';
+        document.getElementById('sessionInput').classList.add('hidden');
         document.getElementById('objective').value = '';
         document.getElementById('datetime').value = '';
         document.getElementById('location').value = '';
@@ -791,6 +805,61 @@ class SeminarPlanningApp {
         
         // 기본 행 추가
         this.addDefaultRows();
+    }
+
+    // 회차 필드 업데이트
+    updateSessionField(value) {
+        const selectElement = document.getElementById('sessionSelect');
+        const inputElement = document.getElementById('sessionInput');
+        
+        if (value === '직접입력') {
+            selectElement.style.display = 'none';
+            inputElement.classList.remove('hidden');
+            inputElement.focus();
+            this.currentData.session = '';
+        } else if (value) {
+            selectElement.style.display = 'block';
+            inputElement.classList.add('hidden');
+            this.currentData.session = value;
+        } else {
+            selectElement.style.display = 'block';
+            inputElement.classList.add('hidden');
+            this.currentData.session = '';
+        }
+    }
+
+    // 회차 직접 입력 값 업데이트
+    updateSessionValue(value) {
+        this.currentData.session = value;
+    }
+
+    // 회차 필드 데이터 채우기
+    populateSessionField() {
+        const selectElement = document.getElementById('sessionSelect');
+        const inputElement = document.getElementById('sessionInput');
+        
+        if (this.currentData.session) {
+            const sessionOptions = ['제1회', '제2회', '제3회', '제4회', '제5회', '제6회', '제7회', '제8회', '제9회', '제10회'];
+            
+            if (sessionOptions.includes(this.currentData.session)) {
+                // 미리 정의된 옵션인 경우
+                selectElement.value = this.currentData.session;
+                selectElement.style.display = 'block';
+                inputElement.classList.add('hidden');
+            } else {
+                // 직접 입력된 값인 경우
+                selectElement.value = '직접입력';
+                selectElement.style.display = 'none';
+                inputElement.value = this.currentData.session;
+                inputElement.classList.remove('hidden');
+            }
+        } else {
+            // 빈 값인 경우
+            selectElement.value = '';
+            selectElement.style.display = 'block';
+            inputElement.value = '';
+            inputElement.classList.add('hidden');
+        }
     }
 
     // 폼 초기화 (사용자 요청)
@@ -871,10 +940,11 @@ class SeminarPlanningApp {
             
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            doc.text(`목표: ${this.currentData.objective || '미입력'}`, 20, 55);
-            doc.text(`일시: ${this.currentData.datetime || '미입력'}`, 20, 65);
-            doc.text(`장소: ${this.currentData.location || '미입력'}`, 20, 75);
-            doc.text(`참석 대상: ${this.currentData.attendees || '미입력'}`, 20, 85);
+            doc.text(`회차: ${this.currentData.session || '미입력'}`, 20, 55);
+            doc.text(`목표: ${this.currentData.objective || '미입력'}`, 20, 65);
+            doc.text(`일시: ${this.currentData.datetime || '미입력'}`, 20, 75);
+            doc.text(`장소: ${this.currentData.location || '미입력'}`, 20, 85);
+            doc.text(`참석 대상: ${this.currentData.attendees || '미입력'}`, 20, 95);
             
             // 시간 계획 테이블
             if (this.currentData.timeSchedule.length > 0) {
@@ -952,6 +1022,7 @@ class SeminarPlanningApp {
                 ['전사 신기술 세미나 실행계획'],
                 [''],
                 ['기본 정보'],
+                ['회차', this.currentData.session || '미입력'],
                 ['목표', this.currentData.objective || '미입력'],
                 ['일시', this.currentData.datetime || '미입력'],
                 ['장소', this.currentData.location || '미입력'],
@@ -1029,6 +1100,12 @@ class SeminarPlanningApp {
                         new Paragraph({
                             text: '기본 정보',
                             heading: 'Heading2'
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: '회차: ', bold: true }),
+                                new TextRun({ text: this.currentData.session || '미입력' })
+                            ]
                         }),
                         new Paragraph({
                             children: [
