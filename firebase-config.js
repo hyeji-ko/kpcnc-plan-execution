@@ -170,6 +170,8 @@ window.loadData = loadData;
 window.updateData = updateData;
 window.deleteData = deleteData;
 window.loadAllPlans = loadAllPlans;
+window.db = db;
+window.useLocalStorage = useLocalStorage;
 
 // 페이지 로드 시 Firebase 상태 확인
 document.addEventListener('DOMContentLoaded', function() {
