@@ -11,54 +11,105 @@
     <link href="styles.css" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%233B82F6'/><path d='M30 40h40v4H30zm0 8h40v4H30zm0 8h25v4H30z' fill='white'/></svg>">
               <!-- 내보내기 기능을 위한 라이브러리들 -->
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+     <!-- jsPDF 라이브러리 -->
+     <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
      <script>
          // jsPDF 전역 객체 노출
          if (typeof jsPDF !== 'undefined') {
              window.jsPDF = jsPDF;
-             console.log('jsPDF 라이브러리 로드 완료');
+             console.log('✅ jsPDF 라이브러리 로드 완료');
          } else {
-             console.error('jsPDF 라이브러리 로드 실패');
+             console.error('❌ jsPDF 라이브러리 로드 실패');
          }
      </script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+     
+     <!-- jspdf-autotable 플러그인 -->
+     <script src="https://unpkg.com/jspdf-autotable@latest/dist/jspdf.plugin.autotable.min.js"></script>
      <script>
          // jspdf-autotable 전역 객체 노출
          if (typeof jspdfAutotable !== 'undefined') {
              window.jspdfAutotable = jspdfAutotable;
-             console.log('jspdf-autotable 라이브러리 로드 완료');
+             console.log('✅ jspdf-autotable 라이브러리 로드 완료');
          } else {
-             console.error('jspdf-autotable 라이브러리 로드 실패');
+             console.error('❌ jspdf-autotable 라이브러리 로드 실패');
          }
      </script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+     
+     <!-- XLSX 라이브러리 -->
+     <script src="https://unpkg.com/xlsx@latest/dist/xlsx.full.min.js"></script>
      <script>
          // XLSX 전역 객체 노출
          if (typeof XLSX !== 'undefined') {
              window.XLSX = XLSX;
-             console.log('XLSX 라이브러리 로드 완료');
+             console.log('✅ XLSX 라이브러리 로드 완료');
          } else {
-             console.error('XLSX 라이브러리 로드 실패');
+             console.error('❌ XLSX 라이브러리 로드 실패');
          }
      </script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.2.3/docx.min.js"></script>
+     
+     <!-- docx 라이브러리 -->
+     <script src="https://unpkg.com/docx@latest/build/index.js"></script>
      <script>
          // docx 전역 객체 노출
          if (typeof docx !== 'undefined') {
              window.docx = docx;
-             console.log('docx 라이브러리 로드 완료');
+             console.log('✅ docx 라이브러리 로드 완료');
          } else {
-             console.error('docx 라이브러리 로드 실패');
+             console.error('❌ docx 라이브러리 로드 실패');
          }
      </script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+     
+     <!-- FileSaver 라이브러리 -->
+     <script src="https://unpkg.com/file-saver@latest/dist/FileSaver.min.js"></script>
      <script>
          // FileSaver 전역 객체 노출
          if (typeof saveAs !== 'undefined') {
              window.saveAs = saveAs;
-             console.log('FileSaver 라이브러리 로드 완료');
+             console.log('✅ FileSaver 라이브러리 로드 완료');
          } else {
-             console.error('FileSaver 라이브러리 로드 실패');
+             console.error('❌ FileSaver 라이브러리 로드 실패');
+         }
+     </script>
+     
+     <!-- 대체 CDN (unpkg가 실패할 경우) -->
+     <script>
+         // jsPDF 대체 로딩
+         if (typeof jsPDF === 'undefined') {
+             const script = document.createElement('script');
+             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+             script.onload = function() {
+                 if (typeof jsPDF !== 'undefined') {
+                     window.jsPDF = jsPDF;
+                     console.log('✅ jsPDF 라이브러리 대체 CDN으로 로드 완료');
+                 }
+             };
+             document.head.appendChild(script);
+         }
+         
+         // jspdf-autotable 대체 로딩
+         if (typeof jspdfAutotable === 'undefined') {
+             const script = document.createElement('script');
+             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js';
+             script.onload = function() {
+                 if (typeof jspdfAutotable !== 'undefined') {
+                     window.jspdfAutotable = jspdfAutotable;
+                     console.log('✅ jspdf-autotable 라이브러리 대체 CDN으로 로드 완료');
+                 }
+             };
+             document.head.appendChild(script);
+         }
+         
+         // docx 대체 로딩
+         if (typeof docx === 'undefined') {
+             const script = document.createElement('script');
+             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/docx/8.2.3/docx.min.js';
+             script.onload = function() {
+                 if (typeof docx !== 'undefined') {
+                     window.docx = docx;
+                     console.log('✅ docx 라이브러리 대체 CDN으로 로드 완료');
+                 }
+             };
+             document.head.appendChild(script);
          }
      </script>
 </head>
@@ -237,7 +288,7 @@
     </div>
 
          <!-- 조회 결과 모달 -->
-     <div id="searchModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+     <div id="searchModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden" style="overflow: hidden;">
          <div class="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-3xl shadow-2xl w-11/12 max-w-7xl max-h-[90vh] overflow-hidden border border-gray-100">
              <!-- 모달 헤더 -->
              <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white px-8 py-6 flex justify-between items-center relative overflow-hidden">
