@@ -50,8 +50,30 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">목표</label>
-                    <textarea id="objective" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" placeholder="세미나의 목표와 기대효과를 입력하세요..."></textarea>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">세미나 개최 회차</label>
+                        <div class="flex space-x-2">
+                            <select id="sessionSelect" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" onchange="app.updateSessionField(this.value)">
+                                <option value="">선택하세요</option>
+                                <option value="제1회">제1회</option>
+                                <option value="제2회">제2회</option>
+                                <option value="제3회">제3회</option>
+                                <option value="제4회">제4회</option>
+                                <option value="제5회">제5회</option>
+                                <option value="제6회">제6회</option>
+                                <option value="제7회">제7회</option>
+                                <option value="제8회">제8회</option>
+                                <option value="제9회">제9회</option>
+                                <option value="제10회">제10회</option>
+                                <option value="직접입력">직접입력</option>
+                            </select>
+                            <input type="text" id="sessionInput" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent hidden" placeholder="회차를 직접 입력하세요" onchange="app.updateSessionValue(this.value)">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">목표</label>
+                        <textarea id="objective" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" placeholder="세미나의 목표와 기대효과를 입력하세요..."></textarea>
+                    </div>
                 </div>
                 
                 <div class="space-y-4">
@@ -198,16 +220,17 @@
             <!-- 조회 결과 그리드 -->
             <div class="p-6 overflow-auto max-h-[60vh]">
                 <table class="min-w-full bg-white border border-gray-200 rounded-lg">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100" onclick="app.sortByDatetime()">
-                                일시 <i class="fas fa-sort ml-1"></i>
-                            </th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">목표</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">장소</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">참석 대상</th>
-                        </tr>
-                    </thead>
+                                         <thead class="bg-gray-50">
+                         <tr>
+                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">회차</th>
+                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100" onclick="app.sortByDatetime()">
+                                 일시 <i class="fas fa-sort ml-1"></i>
+                             </th>
+                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">목표</th>
+                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">장소</th>
+                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">참석 대상</th>
+                         </tr>
+                     </thead>
                     <tbody id="searchResultBody">
                         <!-- 조회 결과가 여기에 표시됩니다 -->
                     </tbody>
