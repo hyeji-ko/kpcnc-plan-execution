@@ -26,8 +26,8 @@ class SeminarPlanningApp {
         // 저장 버튼
         document.getElementById('saveBtn').addEventListener('click', () => this.saveData());
         
-        // 불러오기 버튼
-        document.getElementById('loadBtn').addEventListener('click', () => this.loadData());
+        // 조회 버튼
+        document.getElementById('loadBtn').addEventListener('click', () => this.showSearchModal());
         
         // 시간 계획 행 추가
         document.getElementById('addTimeRow').addEventListener('click', () => this.addTimeRow());
@@ -169,11 +169,21 @@ class SeminarPlanningApp {
                        placeholder="직급을 입력하세요" 
                        onchange="app.updateAttendeeList(${rowCount}, 'position', this.value)">
             </td>
-            <td class="px-4 py-3 border-b">
-                <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                       placeholder="소속을 입력하세요" 
-                       onchange="app.updateAttendeeList(${rowCount}, 'department', this.value)">
-            </td>
+                            <td class="px-4 py-3 border-b">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            onchange="app.updateAttendeeList(${rowCount}, 'department', this.value)">
+                        <option value="">선택하세요</option>
+                        <option value="SI사업본부">SI사업본부</option>
+                        <option value="AI사업본부">AI사업본부</option>
+                        <option value="전략사업본부">전략사업본부</option>
+                        <option value="경영관리본부">경영관리본부</option>
+                        <option value="직접입력">직접입력</option>
+                    </select>
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                           placeholder="소속을 직접 입력하세요" 
+                           onchange="app.updateAttendeeList(${rowCount}, 'department', this.value)"
+                           id="departmentInput_${rowCount}">
+                </td>
             <td class="px-4 py-3 border-b">
                 <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                        placeholder="업무를 입력하세요" 
@@ -206,6 +216,21 @@ class SeminarPlanningApp {
     updateAttendeeList(index, field, value) {
         if (this.currentData.attendeeList[index]) {
             this.currentData.attendeeList[index][field] = value;
+            
+            // 소속 필드에서 "직접입력" 선택 시 입력 필드 표시/숨김 처리
+            if (field === 'department') {
+                const selectElement = event.target;
+                const inputElement = document.getElementById(`departmentInput_${index}`);
+                
+                if (value === '직접입력') {
+                    selectElement.style.display = 'none';
+                    inputElement.classList.remove('hidden');
+                    inputElement.focus();
+                } else {
+                    selectElement.style.display = 'block';
+                    inputElement.classList.add('hidden');
+                }
+            }
         }
     }
 
@@ -277,9 +302,44 @@ class SeminarPlanningApp {
         tbody.innerHTML = '';
         
         this.currentData.timeSchedule.forEach((item, index) => {
-            this.addTimeRow();
+            // 직접 행 생성 (addTimeRow() 호출하지 않음)
+            const row = document.createElement('tr');
+            row.className = 'table-row-hover';
+            row.innerHTML = `
+                <td class="px-4 py-3 border-b">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" onchange="app.updateTimeSchedule(${index}, 'type', this.value)">
+                        <option value="">선택</option>
+                        <option value="발표">발표</option>
+                        <option value="토의">토의</option>
+                        <option value="정리">정리</option>
+                        <option value="석식">석식</option>
+                        <option value="보고">보고</option>
+                    </select>
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="주요 내용을 입력하세요" 
+                           onchange="app.updateTimeSchedule(${index}, 'content', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="time" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           onchange="app.updateTimeSchedule(${index}, 'time', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="담당자를 입력하세요" 
+                           onchange="app.updateTimeSchedule(${index}, 'responsible', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <button onclick="app.removeTimeRow(${index})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            
             // 데이터 채우기
-            const row = tbody.children[index];
             const inputs = row.querySelectorAll('input, select');
             if (inputs[0]) inputs[0].value = item.type || '';
             if (inputs[1]) inputs[1].value = item.content || '';
@@ -293,13 +353,76 @@ class SeminarPlanningApp {
         tbody.innerHTML = '';
         
         this.currentData.attendeeList.forEach((item, index) => {
-            this.addAttendeeRow();
+            // 직접 행 생성 (addAttendeeRow() 호출하지 않음)
+            const row = document.createElement('tr');
+            row.className = 'table-row-hover';
+            row.innerHTML = `
+                <td class="px-4 py-3 border-b text-center">${index + 1}</td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="성명을 입력하세요" 
+                           onchange="app.updateAttendeeList(${index}, 'name', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="직급을 입력하세요" 
+                           onchange="app.updateAttendeeList(${index}, 'position', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            onchange="app.updateAttendeeList(${index}, 'department', this.value)">
+                        <option value="">선택하세요</option>
+                        <option value="SI사업본부">SI사업본부</option>
+                        <option value="AI사업본부">AI사업본부</option>
+                        <option value="전략사업본부">전략사업본부</option>
+                        <option value="경영관리본부">경영관리본부</option>
+                        <option value="직접입력">직접입력</option>
+                    </select>
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                           placeholder="소속을 직접 입력하세요" 
+                           onchange="app.updateAttendeeList(${index}, 'department', this.value)"
+                           id="departmentInput_${index}">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="업무를 입력하세요" 
+                           onchange="app.updateAttendeeList(${index}, 'work', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <button onclick="app.removeAttendeeRow(${index})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            
             // 데이터 채우기
-            const row = tbody.children[index];
             const inputs = row.querySelectorAll('input');
+            const select = row.querySelector('select');
+            
             if (inputs[0]) inputs[0].value = item.name || '';
             if (inputs[1]) inputs[1].value = item.position || '';
-            if (inputs[2]) inputs[2].value = item.department || '';
+            
+            // 소속 필드 처리
+            if (item.department) {
+                const departmentOptions = ['SI사업본부', 'AI사업본부', '전략사업본부', '경영관리본부'];
+                if (departmentOptions.includes(item.department)) {
+                    // 미리 정의된 옵션인 경우
+                    if (select) select.value = item.department;
+                } else {
+                    // 직접 입력된 값인 경우
+                    if (select) {
+                        select.value = '직접입력';
+                        select.style.display = 'none';
+                    }
+                    if (inputs[2]) {
+                        inputs[2].value = item.department;
+                        inputs[2].classList.remove('hidden');
+                    }
+                }
+            }
+            
             if (inputs[3]) inputs[3].value = item.work || '';
         });
     }
@@ -385,10 +508,20 @@ class SeminarPlanningApp {
         
         Array.from(attendeeRows).forEach(row => {
             const inputs = row.querySelectorAll('input');
+            const select = row.querySelector('select');
+            
+            // 소속 데이터 수집 (select 또는 input에서)
+            let department = '';
+            if (select && select.value && select.value !== '직접입력') {
+                department = select.value;
+            } else if (inputs[2] && inputs[2].value) {
+                department = inputs[2].value;
+            }
+            
             this.currentData.attendeeList.push({
                 name: inputs[0]?.value || '',
                 position: inputs[1]?.value || '',
-                department: inputs[2]?.value || '',
+                department: department,
                 work: inputs[3]?.value || ''
             });
         });
@@ -439,6 +572,202 @@ class SeminarPlanningApp {
         }, 3000);
     }
 
+    // 조회 모달 표시
+    showSearchModal() {
+        const modal = document.getElementById('searchModal');
+        modal.classList.remove('hidden');
+        
+        // 모달 이벤트 바인딩
+        this.bindSearchModalEvents();
+        
+        // 기본 검색 (전체 조회)
+        this.searchSeminars();
+    }
+
+    // 조회 모달 이벤트 바인딩
+    bindSearchModalEvents() {
+        // 모달 닫기
+        document.getElementById('closeSearchModal').addEventListener('click', () => {
+            document.getElementById('searchModal').classList.add('hidden');
+        });
+
+        // 검색 버튼
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            this.searchSeminars();
+        });
+
+        // 검색 조건에서 Enter 키
+        document.getElementById('searchDatetime').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.searchSeminars();
+            }
+        });
+    }
+
+    // 세미나 검색
+    async searchSeminars() {
+        try {
+            this.showLoading(true);
+            
+            const searchDatetime = document.getElementById('searchDatetime').value;
+            const result = await loadAllPlans();
+            
+            if (result.success) {
+                let filteredData = result.data;
+                
+                // 일시 필터링
+                if (searchDatetime) {
+                    const searchDate = new Date(searchDatetime);
+                    filteredData = result.data.filter(item => {
+                        if (item.datetime) {
+                            const itemDate = new Date(item.datetime);
+                            return itemDate.toDateString() === searchDate.toDateString();
+                        }
+                        return false;
+                    });
+                }
+                
+                this.displaySearchResults(filteredData);
+            } else {
+                this.showErrorToast(result.message);
+            }
+        } catch (error) {
+            console.error('검색 오류:', error);
+            this.showErrorToast('검색 중 오류가 발생했습니다.');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // 검색 결과 표시
+    displaySearchResults(data) {
+        const tbody = document.getElementById('searchResultBody');
+        tbody.innerHTML = '';
+        
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                        조회된 결과가 없습니다.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        data.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.className = 'table-row-hover cursor-pointer';
+            row.onclick = () => this.loadSeminarDetail(item.id);
+            
+            const datetime = item.datetime ? new Date(item.datetime).toLocaleString('ko-KR') : '미입력';
+            const objective = item.objective || '미입력';
+            const location = item.location || '미입력';
+            const attendees = item.attendees || '미입력';
+            
+            row.innerHTML = `
+                <td class="px-4 py-3 border-b text-blue-600 hover:text-blue-800 font-medium">
+                    ${datetime}
+                </td>
+                <td class="px-4 py-3 border-b">${objective}</td>
+                <td class="px-4 py-3 border-b">${location}</td>
+                <td class="px-4 py-3 border-b">${attendees}</td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    }
+
+    // 세미나 상세 정보 로드
+    async loadSeminarDetail(id) {
+        try {
+            this.showLoading(true);
+            
+            // Firebase에서 해당 문서 조회
+            const result = await this.getSeminarById(id);
+            
+            if (result.success) {
+                // 모달 닫기
+                document.getElementById('searchModal').classList.add('hidden');
+                
+                // 메인 화면에 데이터 로드
+                this.currentData = result.data;
+                this.currentDocumentId = result.id;
+                this.populateForm();
+                
+                this.showSuccessToast('세미나 계획을 불러왔습니다.');
+            } else {
+                this.showErrorToast(result.message);
+            }
+        } catch (error) {
+            console.error('상세 정보 로드 오류:', error);
+            this.showErrorToast('상세 정보 로드 중 오류가 발생했습니다.');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // ID로 세미나 조회
+    async getSeminarById(id) {
+        try {
+            if (useLocalStorage) {
+                const data = localStorage.getItem('seminarPlan');
+                if (data) {
+                    const parsedData = JSON.parse(data);
+                    return { success: true, data: parsedData, id: 'local' };
+                } else {
+                    return { success: false, message: '저장된 데이터가 없습니다.' };
+                }
+            } else {
+                // Firebase에서 특정 문서 조회
+                const doc = await db.collection('seminarPlans').doc(id).get();
+                if (doc.exists) {
+                    return { success: true, data: doc.data(), id: doc.id };
+                } else {
+                    return { success: false, message: '해당 세미나 계획을 찾을 수 없습니다.' };
+                }
+            }
+        } catch (error) {
+            console.error('세미나 조회 오류:', error);
+            return { success: false, message: '세미나 조회 중 오류가 발생했습니다: ' + error.message };
+        }
+    }
+
+    // 일시별 정렬
+    sortByDatetime() {
+        const tbody = document.getElementById('searchResultBody');
+        const rows = Array.from(tbody.children);
+        
+        // 정렬 방향 토글
+        if (!this.sortDirection) this.sortDirection = 'asc';
+        else this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        
+        rows.sort((a, b) => {
+            const aText = a.children[0].textContent;
+            const bText = b.children[0].textContent;
+            
+            if (aText === '조회된 결과가 없습니다.') return 1;
+            if (bText === '조회된 결과가 없습니다.') return -1;
+            
+            const aDate = new Date(aText);
+            const bDate = new Date(bText);
+            
+            if (this.sortDirection === 'asc') {
+                return aDate - bDate;
+            } else {
+                return bDate - aDate;
+            }
+        });
+        
+        // 정렬된 행들을 다시 추가
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // 정렬 방향 표시 업데이트
+        const header = document.querySelector('th[onclick="app.sortByDatetime()"]');
+        const icon = header.querySelector('i');
+        icon.className = this.sortDirection === 'asc' ? 'fas fa-sort-up ml-1' : 'fas fa-sort-down ml-1';
+    }
+
 
 
     exportToPDF() {
@@ -446,11 +775,10 @@ class SeminarPlanningApp {
             this.showLoading(true);
             
             // jsPDF 라이브러리 확인
-            if (typeof window.jsPDF === 'undefined') {
+            if (typeof jsPDF === 'undefined') {
                 throw new Error('jsPDF 라이브러리를 불러올 수 없습니다.');
             }
 
-            const { jsPDF } = window.jsPDF;
             const doc = new jsPDF();
             
             // 제목 추가
@@ -601,11 +929,11 @@ class SeminarPlanningApp {
             this.showLoading(true);
             
             // docx 라이브러리 확인
-            if (typeof window.docx === 'undefined') {
+            if (typeof docx === 'undefined') {
                 throw new Error('docx 라이브러리를 불러올 수 없습니다.');
             }
 
-            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = window.docx;
+            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
             
             // 문서 생성
             const doc = new Document({
@@ -737,7 +1065,7 @@ class SeminarPlanningApp {
             // 파일 생성 및 저장
             const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.docx`;
             
-            window.docx.Packer.toBlob(doc).then(blob => {
+            docx.Packer.toBlob(doc).then(blob => {
                 if (typeof saveAs !== 'undefined') {
                     saveAs(blob, fileName);
                     this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다.');
