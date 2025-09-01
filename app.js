@@ -635,12 +635,129 @@ class SeminarPlanningApp {
             this.addNewSeminar();
         });
 
-        // 검색 조건에서 Enter 키
-        document.getElementById('searchDatetime').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.searchSeminars();
+        // 년월 선택기 이벤트 바인딩
+        this.bindYearMonthPickerEvents();
+    }
+
+    // 년월 선택기 이벤트 바인딩
+    bindYearMonthPickerEvents() {
+        const searchYearMonth = document.getElementById('searchYearMonth');
+        const yearMonthPicker = document.getElementById('yearMonthPicker');
+        const prevYear = document.getElementById('prevYear');
+        const nextYear = document.getElementById('nextYear');
+        const monthBtns = document.querySelectorAll('.month-btn');
+
+        // 년월 선택 버튼 클릭
+        searchYearMonth.addEventListener('click', () => {
+            yearMonthPicker.classList.toggle('hidden');
+            this.populateYearList();
+        });
+
+        // 년도 이전/다음 버튼
+        prevYear.addEventListener('click', () => {
+            this.changeYearRange(-5);
+        });
+
+        nextYear.addEventListener('click', () => {
+            this.changeYearRange(5);
+        });
+
+        // 월 선택
+        monthBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const month = btn.dataset.month;
+                this.selectMonth(month);
+                yearMonthPicker.classList.add('hidden');
+            });
+        });
+
+        // 외부 클릭 시 닫기
+        document.addEventListener('click', (e) => {
+            if (!searchYearMonth.contains(e.target) && !yearMonthPicker.contains(e.target)) {
+                yearMonthPicker.classList.add('hidden');
             }
         });
+
+        // 현재 년월로 초기화
+        this.initializeCurrentYearMonth();
+        this.setCurrentMonthButton();
+    }
+
+    // 현재 년월로 초기화
+    initializeCurrentYearMonth() {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+        
+        this.selectedYear = currentYear;
+        this.selectedMonth = currentMonth;
+        
+        this.updateSelectedYearMonthDisplay();
+        this.populateYearList();
+    }
+
+    // 선택된 년월 표시 업데이트
+    updateSelectedYearMonthDisplay() {
+        const display = document.getElementById('selectedYearMonth');
+        display.textContent = `${this.selectedYear}년 ${this.selectedMonth}월`;
+    }
+
+    // 년도 목록 생성
+    populateYearList() {
+        const yearList = document.getElementById('yearList');
+        const startYear = Math.max(2020, this.selectedYear - 5);
+        const endYear = Math.min(2030, this.selectedYear + 5);
+        
+        yearList.innerHTML = '';
+        
+        for (let year = startYear; year <= endYear; year++) {
+            const yearBtn = document.createElement('button');
+            yearBtn.type = 'button';
+            yearBtn.className = `w-full p-2 text-left hover:bg-blue-50 rounded ${year === this.selectedYear ? 'bg-blue-500 text-white' : ''}`;
+            yearBtn.textContent = year;
+            yearBtn.addEventListener('click', () => {
+                this.selectYear(year);
+            });
+            yearList.appendChild(yearBtn);
+        }
+    }
+
+    // 년도 선택
+    selectYear(year) {
+        this.selectedYear = year;
+        this.updateSelectedYearMonthDisplay();
+        this.populateYearList();
+    }
+
+    // 월 선택
+    selectMonth(month) {
+        this.selectedMonth = month;
+        this.updateSelectedYearMonthDisplay();
+        
+        // 월 버튼 스타일 업데이트
+        document.querySelectorAll('.month-btn').forEach(btn => {
+            btn.classList.remove('bg-blue-500', 'text-white');
+            if (btn.dataset.month === month) {
+                btn.classList.add('bg-blue-500', 'text-white');
+            }
+        });
+    }
+
+    // 현재 월 버튼 기본 선택 상태 설정
+    setCurrentMonthButton() {
+        const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+        document.querySelectorAll('.month-btn').forEach(btn => {
+            if (btn.dataset.month === currentMonth) {
+                btn.classList.add('bg-blue-500', 'text-white');
+            }
+        });
+    }
+
+    // 년도 범위 변경
+    changeYearRange(direction) {
+        const yearList = document.getElementById('yearList');
+        const currentScrollTop = yearList.scrollTop;
+        yearList.scrollTop = currentScrollTop + (direction * 100);
     }
 
     // 세미나 검색
@@ -648,19 +765,23 @@ class SeminarPlanningApp {
         try {
             this.showLoading(true);
             
-            const searchDatetime = document.getElementById('searchDatetime').value;
             const result = await loadAllPlans();
             
             if (result.success) {
                 let filteredData = result.data;
                 
-                // 일시 필터링
-                if (searchDatetime) {
-                    const searchDate = new Date(searchDatetime);
+                // 년월 필터링
+                if (this.selectedYear && this.selectedMonth) {
+                    const searchYear = this.selectedYear;
+                    const searchMonth = this.selectedMonth;
+                    
                     filteredData = result.data.filter(item => {
                         if (item.datetime) {
                             const itemDate = new Date(item.datetime);
-                            return itemDate.toDateString() === searchDate.toDateString();
+                            const itemYear = itemDate.getFullYear();
+                            const itemMonth = String(itemDate.getMonth() + 1).padStart(2, '0');
+                            
+                            return itemYear === searchYear && itemMonth === searchMonth;
                         }
                         return false;
                     });
