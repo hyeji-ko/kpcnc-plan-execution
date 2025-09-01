@@ -11,12 +11,15 @@ class SeminarPlanningApp {
             attendeeList: []
         };
         
+        this.currentDocumentId = null; // Firebase 문서 ID 저장
+        
         this.init();
     }
 
-    init() {
+    async init() {
         this.bindEvents();
-        this.loadInitialData();
+        this.updateFirebaseStatus(); // Firebase 상태 표시
+        await this.loadInitialData();
         this.addDefaultRows();
     }
 
@@ -55,16 +58,20 @@ class SeminarPlanningApp {
         });
     }
 
-    loadInitialData() {
-        // 저장된 데이터가 있으면 불러오기
-        const savedData = localStorage.getItem('seminarPlan');
-        if (savedData) {
-            try {
-                this.currentData = JSON.parse(savedData);
+    async loadInitialData() {
+        try {
+            // Firebase에서 저장된 데이터 불러오기
+            const result = await loadData();
+            if (result.success) {
+                this.currentData = result.data;
+                this.currentDocumentId = result.id; // Firebase 문서 ID 저장
                 this.populateForm();
-            } catch (error) {
-                console.error('저장된 데이터 파싱 오류:', error);
+                console.log('Firebase에서 데이터를 성공적으로 불러왔습니다.');
+            } else {
+                console.log('저장된 데이터가 없습니다:', result.message);
             }
+        } catch (error) {
+            console.error('초기 데이터 로드 오류:', error);
         }
     }
 
@@ -305,8 +312,17 @@ class SeminarPlanningApp {
             // 현재 폼 데이터 수집
             this.collectFormData();
             
-            // 데이터 저장
-            const result = await saveData(this.currentData);
+            let result;
+            if (this.currentDocumentId) {
+                // 기존 문서 업데이트
+                result = await updateData(this.currentDocumentId, this.currentData);
+            } else {
+                // 새 문서 생성
+                result = await saveData(this.currentData);
+                if (result.success && result.id) {
+                    this.currentDocumentId = result.id; // 새로 생성된 문서 ID 저장
+                }
+            }
             
             if (result.success) {
                 this.showSuccessToast(result.message);
@@ -329,8 +345,9 @@ class SeminarPlanningApp {
             
             if (result.success) {
                 this.currentData = result.data;
+                this.currentDocumentId = result.id; // Firebase 문서 ID 저장
                 this.populateForm();
-                this.showSuccessToast('데이터를 성공적으로 불러왔습니다.');
+                this.showSuccessToast('Firebase에서 데이터를 성공적으로 불러왔습니다.');
             } else {
                 this.showErrorToast(result.message);
             }
@@ -423,23 +440,384 @@ class SeminarPlanningApp {
         }, 3000);
     }
 
+    // Firebase 연결 상태 확인
+    checkFirebaseConnection() {
+        try {
+            if (typeof firebase !== 'undefined' && firebase.app) {
+                const app = firebase.app();
+                console.log('Firebase 연결 상태: 정상', app.name);
+                return true;
+            } else {
+                console.error('Firebase가 로드되지 않았습니다.');
+                return false;
+            }
+        } catch (error) {
+            console.error('Firebase 연결 확인 오류:', error);
+            return false;
+        }
+    }
+
+    // Firebase 상태를 헤더에 표시
+    updateFirebaseStatus() {
+        const isConnected = this.checkFirebaseConnection();
+        const header = document.querySelector('header');
+        
+        // 기존 상태 표시 제거
+        const existingStatus = header.querySelector('.firebase-status');
+        if (existingStatus) {
+            existingStatus.remove();
+        }
+        
+        // 상태 표시 추가
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'firebase-status flex items-center space-x-2';
+        
+        const statusIcon = document.createElement('i');
+        statusIcon.className = isConnected ? 'fas fa-database text-green-500' : 'fas fa-exclamation-triangle text-red-500';
+        
+        const statusText = document.createElement('span');
+        statusText.className = 'text-sm font-medium';
+        statusText.textContent = isConnected ? 'Firebase 연결됨' : 'Firebase 연결 안됨';
+        statusText.style.color = isConnected ? '#10b981' : '#ef4444';
+        
+        statusDiv.appendChild(statusIcon);
+        statusDiv.appendChild(statusText);
+        
+        // 헤더의 저장/불러오기 버튼 옆에 추가
+        const buttonContainer = header.querySelector('.flex.space-x-4');
+        buttonContainer.appendChild(statusDiv);
+    }
+
     exportToPDF() {
-        this.showErrorToast('PDF 내보내기 기능은 준비 중입니다.');
+        try {
+            this.showLoading(true);
+            
+            // jsPDF 라이브러리 확인
+            if (typeof window.jsPDF === 'undefined') {
+                throw new Error('jsPDF 라이브러리를 불러올 수 없습니다.');
+            }
+
+            const { jsPDF } = window.jsPDF;
+            const doc = new jsPDF();
+            
+            // 제목 추가
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('전사 신기술 세미나 실행계획', 105, 20, { align: 'center' });
+            
+            // 기본 정보 섹션
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('기본 정보', 20, 40);
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`목표: ${this.currentData.objective || '미입력'}`, 20, 55);
+            doc.text(`일시: ${this.currentData.datetime || '미입력'}`, 20, 65);
+            doc.text(`장소: ${this.currentData.location || '미입력'}`, 20, 75);
+            doc.text(`참석 대상: ${this.currentData.attendees || '미입력'}`, 20, 85);
+            
+            // 시간 계획 테이블
+            if (this.currentData.timeSchedule.length > 0) {
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('시간 계획', 20, 105);
+                
+                const timeTableData = this.currentData.timeSchedule.map(item => [
+                    item.type || '',
+                    item.content || '',
+                    item.time || '',
+                    item.responsible || ''
+                ]);
+                
+                doc.autoTable({
+                    startY: 115,
+                    head: [['구분', '주요 내용', '시간', '담당']],
+                    body: timeTableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [59, 130, 246] }
+                });
+            }
+            
+            // 참석자 명단 테이블
+            if (this.currentData.attendeeList.length > 0) {
+                const lastY = doc.lastAutoTable.finalY + 10;
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('세미나 참석 명단', 20, lastY);
+                
+                const attendeeTableData = this.currentData.attendeeList.map((item, index) => [
+                    (index + 1).toString(),
+                    item.name || '',
+                    item.position || '',
+                    item.department || '',
+                    item.work || ''
+                ]);
+                
+                doc.autoTable({
+                    startY: lastY + 5,
+                    head: [['No', '성명', '직급', '소속', '업무']],
+                    body: attendeeTableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [147, 51, 234] }
+                });
+            }
+            
+            // 파일 저장
+            const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            
+            this.showSuccessToast('PDF가 성공적으로 내보내졌습니다.');
+        } catch (error) {
+            console.error('PDF 내보내기 오류:', error);
+            this.showErrorToast(`PDF 내보내기 실패: ${error.message}`);
+        } finally {
+            this.showLoading(false);
+        }
     }
 
     exportToExcel() {
-        this.showErrorToast('Excel 내보내기 기능은 준비 중입니다.');
+        try {
+            this.showLoading(true);
+            
+            // XLSX 라이브러리 확인
+            if (typeof XLSX === 'undefined') {
+                throw new Error('XLSX 라이브러리를 불러올 수 없습니다.');
+            }
+
+            // 워크북 생성
+            const wb = XLSX.utils.book_new();
+            
+            // 기본 정보 시트
+            const basicInfoData = [
+                ['전사 신기술 세미나 실행계획'],
+                [''],
+                ['기본 정보'],
+                ['목표', this.currentData.objective || '미입력'],
+                ['일시', this.currentData.datetime || '미입력'],
+                ['장소', this.currentData.location || '미입력'],
+                ['참석 대상', this.currentData.attendees || '미입력'],
+                [''],
+                ['시간 계획'],
+                ['구분', '주요 내용', '시간', '담당']
+            ];
+            
+            // 시간 계획 데이터 추가
+            this.currentData.timeSchedule.forEach(item => {
+                basicInfoData.push([
+                    item.type || '',
+                    item.content || '',
+                    item.time || '',
+                    item.responsible || ''
+                ]);
+            });
+            
+            basicInfoData.push(['']);
+            basicInfoData.push(['세미나 참석 명단']);
+            basicInfoData.push(['No', '성명', '직급', '소속', '업무']);
+            
+            // 참석자 데이터 추가
+            this.currentData.attendeeList.forEach((item, index) => {
+                basicInfoData.push([
+                    (index + 1).toString(),
+                    item.name || '',
+                    item.position || '',
+                    item.department || '',
+                    item.work || ''
+                ]);
+            });
+            
+            const basicInfoSheet = XLSX.utils.aoa_to_sheet(basicInfoData);
+            XLSX.utils.book_append_sheet(wb, basicInfoSheet, '세미나 실행계획');
+            
+            // 파일 저장
+            const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+            this.showSuccessToast('Excel 파일이 성공적으로 내보내졌습니다.');
+        } catch (error) {
+            console.error('Excel 내보내기 오류:', error);
+            this.showErrorToast(`Excel 내보내기 실패: ${error.message}`);
+        } finally {
+            this.showLoading(false);
+        }
     }
 
     exportToWord() {
-        this.showErrorToast('Word 내보내기 기능은 준비 중입니다.');
+        try {
+            this.showLoading(true);
+            
+            // docx 라이브러리 확인
+            if (typeof window.docx === 'undefined') {
+                throw new Error('docx 라이브러리를 불러올 수 없습니다.');
+            }
+
+            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = window.docx;
+            
+            // 문서 생성
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        // 제목
+                        new Paragraph({
+                            text: '전사 신기술 세미나 실행계획',
+                            heading: 'Heading1',
+                            alignment: AlignmentType.CENTER
+                        }),
+                        
+                        // 기본 정보 섹션
+                        new Paragraph({
+                            text: '기본 정보',
+                            heading: 'Heading2'
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: '목표: ', bold: true }),
+                                new TextRun({ text: this.currentData.objective || '미입력' })
+                            ]
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: '일시: ', bold: true }),
+                                new TextRun({ text: this.currentData.datetime || '미입력' })
+                            ]
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: '장소: ', bold: true }),
+                                new TextRun({ text: this.currentData.location || '미입력' })
+                            ]
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: '참석 대상: ', bold: true }),
+                                new TextRun({ text: this.currentData.attendees || '미입력' })
+                            ]
+                        }),
+                        
+                        // 시간 계획 섹션
+                        new Paragraph({
+                            text: '시간 계획',
+                            heading: 'Heading2'
+                        })
+                    ]
+                }]
+            });
+            
+            // 시간 계획 테이블 추가
+            if (this.currentData.timeSchedule.length > 0) {
+                const timeTableRows = [
+                    new TableRow({
+                        children: [
+                            new TableCell({ children: [new Paragraph({ text: '구분' })] }),
+                            new TableCell({ children: [new Paragraph({ text: '주요 내용' })] }),
+                            new TableCell({ children: [new Paragraph({ text: '시간' })] }),
+                            new TableCell({ children: [new Paragraph({ text: '담당' })] })
+                        ]
+                    })
+                ];
+                
+                this.currentData.timeSchedule.forEach(item => {
+                    timeTableRows.push(new TableRow({
+                        children: [
+                            new TableCell({ children: [new Paragraph({ text: item.type || '' })] }),
+                            new TableCell({ children: [new Paragraph({ text: item.content || '' })] }),
+                            new TableCell({ children: [new Paragraph({ text: item.time || '' })] }),
+                            new TableCell({ children: [new Paragraph({ text: item.responsible || '' })] })
+                        ]
+                    }));
+                });
+                
+                const timeTable = new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: timeTableRows
+                });
+                
+                doc.addSection({
+                    children: [timeTable]
+                });
+            }
+            
+            // 참석자 명단 섹션 추가
+            if (this.currentData.attendeeList.length > 0) {
+                const attendeeTableRows = [
+                    new TableRow({
+                        children: [
+                            new TableCell({ children: [new Paragraph({ text: 'No' })] }),
+                            new TableCell({ children: [new Paragraph({ text: '성명' })] }),
+                            new TableCell({ children: [new Paragraph({ text: '직급' })] }),
+                            new TableCell({ children: [new Paragraph({ text: '소속' })] }),
+                            new TableCell({ children: [new Paragraph({ text: '업무' })] })
+                        ]
+                    })
+                ];
+                
+                this.currentData.attendeeList.forEach((item, index) => {
+                    attendeeTableRows.push(new TableRow({
+                        children: [
+                            new TableCell({ children: [new Paragraph({ text: (index + 1).toString() })] }),
+                            new TableCell({ children: [new Paragraph({ text: item.name || '' })] }),
+                            new TableCell({ children: [new Paragraph({ text: item.position || '' })] }),
+                            new TableCell({ children: [new Paragraph({ text: item.department || '' })] }),
+                            new TableCell({ children: [new Paragraph({ text: item.work || '' })] })
+                        ]
+                    }));
+                });
+                
+                const attendeeTable = new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: attendeeTableRows
+                });
+                
+                doc.addSection({
+                    children: [
+                        new Paragraph({
+                            text: '세미나 참석 명단',
+                            heading: 'Heading2'
+                        }),
+                        attendeeTable
+                    ]
+                });
+            }
+            
+            // 파일 생성 및 저장
+            const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.docx`;
+            
+            window.docx.Packer.toBlob(doc).then(blob => {
+                if (typeof saveAs !== 'undefined') {
+                    saveAs(blob, fileName);
+                    this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다.');
+                } else {
+                    // FileSaver.js가 없는 경우 직접 다운로드
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다.');
+                }
+            }).catch(error => {
+                throw new Error(`Word 문서 생성 실패: ${error.message}`);
+            });
+            
+        } catch (error) {
+            console.error('Word 내보내기 오류:', error);
+            this.showErrorToast(`Word 내보내기 실패: ${error.message}`);
+        } finally {
+            this.showLoading(false);
+        }
     }
 }
 
 // 앱 초기화
 let app;
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     app = new SeminarPlanningApp();
+    await app.init();
 });
 
 // 전역 함수로 노출 (HTML에서 호출하기 위해)
