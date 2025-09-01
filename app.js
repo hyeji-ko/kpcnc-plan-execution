@@ -41,42 +41,36 @@ class SeminarPlanningApp {
         }
     }
     
-    // 라이브러리 접근 헬퍼 함수
+    // 라이브러리 존재 여부 확인
     getLibrary(name) {
-        switch(name) {
-            case 'jsPDF':
-                return typeof jsPDF !== 'undefined' || typeof window.jsPDF !== 'undefined';
-            case 'jspdfAutotable':
-                return typeof jspdfAutotable !== 'undefined' || typeof window.jspdfAutotable !== 'undefined';
-            case 'XLSX':
-                return typeof XLSX !== 'undefined' || typeof window.XLSX !== 'undefined';
-            case 'docx':
-                return typeof docx !== 'undefined' || typeof window.docx !== 'undefined';
-            case 'saveAs':
-                return typeof saveAs !== 'undefined' || typeof window.saveAs !== 'undefined';
-            default:
-                return false;
+        if (window.loadedLibrariesStatus && typeof window.loadedLibrariesStatus[name] !== 'undefined') {
+            return window.loadedLibrariesStatus[name];
         }
+        return typeof window[name] !== 'undefined';
     }
-    
-    // 라이브러리 인스턴스 가져오기
+
+    // 라이브러리 인스턴스 반환 (전역 객체 또는 window 객체에서)
     getLibraryInstance(name) {
-        switch(name) {
-            case 'jsPDF':
-                // jsPDF는 UMD 모듈로 로드되므로 window.jsPDF를 사용
-                return window.jsPDF || jsPDF;
-            case 'jspdfAutotable':
-                // jspdf-autotable도 UMD 모듈
-                return window.jspdfAutotable || jspdfAutotable;
-            case 'XLSX':
-                return XLSX || window.XLSX;
-            case 'docx':
-                return docx || window.docx;
-            case 'saveAs':
-                return saveAs || window.saveAs;
-            default:
-                return null;
+        if (typeof window[name] !== 'undefined') {
+            console.log(`🎯 ${name} 라이브러리 (window.${name}) 접근 성공`);
+            return window[name];
         }
+        // docx의 경우 docx.js 라이브러리가 전역 docx 객체를 노출
+        if (name === 'docx' && typeof docx !== 'undefined') {
+            console.log(`🎯 ${name} 라이브러리 (direct docx) 접근 성공`);
+            return docx;
+        }
+        // jspdf-autotable의 경우 jspdfAutotable 전역 객체를 노출
+        if (name === 'jspdfAutotable' && typeof jspdfAutotable !== 'undefined') {
+            console.log(`🎯 ${name} 라이브러리 (direct jspdfAutotable) 접근 성공`);
+            return jspdfAutotable;
+        }
+        // FileSaver의 경우 saveAs 함수를 전역으로 노출
+        if (name === 'saveAs' && typeof saveAs !== 'undefined') {
+            console.log(`🎯 ${name} 라이브러리 (direct saveAs) 접근 성공`);
+            return saveAs;
+        }
+        return null;
     }
 
     async init() {
@@ -1260,11 +1254,6 @@ class SeminarPlanningApp {
             this.showSuccessToast('PDF가 성공적으로 내보내졌습니다.');
         } catch (error) {
             console.error('PDF 내보내기 오류:', error);
-            console.error('jsPDF 상태:', {
-                jsPDF: typeof jsPDF,
-                windowJsPDF: typeof window.jsPDF,
-                windowJsPDFJsPDF: typeof window.jsPDF !== 'undefined' ? typeof window.jsPDF.jsPDF : 'undefined'
-            });
             this.showErrorToast(`PDF 내보내기 실패: ${error.message}`);
         } finally {
             this.showLoading(false);
