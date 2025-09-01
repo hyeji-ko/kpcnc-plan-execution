@@ -26,6 +26,9 @@
                     <h1 class="text-3xl font-bold text-gray-900">전사 신기술 세미나 실행계획</h1>
                 </div>
                 <div class="flex space-x-4">
+                    <button id="resetBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center">
+                        <i class="fas fa-undo mr-2"></i>초기화
+                    </button>
                     <button id="saveBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center">
                         <i class="fas fa-save mr-2"></i>저장
                     </button>
@@ -178,11 +181,16 @@
             
             <!-- 검색 조건 -->
             <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center space-x-4">
-                    <label class="text-sm font-medium text-gray-700">일시:</label>
-                    <input type="datetime-local" id="searchDatetime" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <button id="searchBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200">
-                        <i class="fas fa-search mr-2"></i>검색
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <label class="text-sm font-medium text-gray-700">일시:</label>
+                        <input type="datetime-local" id="searchDatetime" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <button id="searchBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200">
+                            <i class="fas fa-search mr-2"></i>검색
+                        </button>
+                    </div>
+                    <button id="addNewBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center">
+                        <i class="fas fa-plus mr-2"></i>등록
                     </button>
                 </div>
             </div>
