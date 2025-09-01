@@ -23,21 +23,57 @@ class SeminarPlanningApp {
     // 라이브러리 로딩 상태 확인
     checkLibraries() {
         const libraries = {
-            jsPDF: typeof jsPDF !== 'undefined' || typeof window.jsPDF !== 'undefined',
-            jspdfAutotable: typeof jspdfAutotable !== 'undefined' || typeof window.jspdfAutotable !== 'undefined',
-            XLSX: typeof XLSX !== 'undefined' || typeof window.XLSX !== 'undefined',
-            docx: typeof docx !== 'undefined' || typeof window.docx !== 'undefined',
-            saveAs: typeof saveAs !== 'undefined' || typeof window.saveAs !== 'undefined'
+            jsPDF: this.getLibrary('jsPDF'),
+            jspdfAutotable: this.getLibrary('jspdfAutotable'),
+            XLSX: this.getLibrary('XLSX'),
+            docx: this.getLibrary('docx'),
+            saveAs: this.getLibrary('saveAs')
         };
         
-        console.log('라이브러리 로딩 상태:', libraries);
+        console.log('📚 라이브러리 로딩 상태:', libraries);
         
         for (const lib in libraries) {
             if (!libraries[lib]) {
-                console.warn(`경고: ${lib} 라이브러리가 로드되지 않았습니다.`);
+                console.warn(`⚠️ 경고: ${lib} 라이브러리가 로드되지 않았습니다.`);
             } else {
                 console.log(`✅ ${lib} 라이브러리 로드 완료`);
             }
+        }
+    }
+    
+    // 라이브러리 접근 헬퍼 함수
+    getLibrary(name) {
+        switch(name) {
+            case 'jsPDF':
+                return typeof jsPDF !== 'undefined' || typeof window.jsPDF !== 'undefined';
+            case 'jspdfAutotable':
+                return typeof jspdfAutotable !== 'undefined' || typeof window.jspdfAutotable !== 'undefined';
+            case 'XLSX':
+                return typeof XLSX !== 'undefined' || typeof window.XLSX !== 'undefined';
+            case 'docx':
+                return typeof docx !== 'undefined' || typeof window.docx !== 'undefined';
+            case 'saveAs':
+                return typeof saveAs !== 'undefined' || typeof window.saveAs !== 'undefined';
+            default:
+                return false;
+        }
+    }
+    
+    // 라이브러리 인스턴스 가져오기
+    getLibraryInstance(name) {
+        switch(name) {
+            case 'jsPDF':
+                return jsPDF || window.jsPDF;
+            case 'jspdfAutotable':
+                return jspdfAutotable || window.jspdfAutotable;
+            case 'XLSX':
+                return XLSX || window.XLSX;
+            case 'docx':
+                return docx || window.docx;
+            case 'saveAs':
+                return saveAs || window.saveAs;
+            default:
+                return null;
         }
     }
 
@@ -124,14 +160,105 @@ class SeminarPlanningApp {
     }
 
     addDefaultRows() {
-        // 기본 시간 계획 행 추가
+        // 기본 시간 계획 행 추가 (직접 생성, addTimeRow() 호출하지 않음)
         if (this.currentData.timeSchedule.length === 0) {
-            this.addTimeRow();
+            const tbody = document.getElementById('timeTableBody');
+            const row = document.createElement('tr');
+            row.className = 'table-row-hover';
+            row.innerHTML = `
+                <td class="px-4 py-3 border-b">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" onchange="app.updateTimeSchedule(0, 'type', this.value)">
+                        <option value="">선택</option>
+                        <option value="발표">발표</option>
+                        <option value="토의">토의</option>
+                        <option value="정리">정리</option>
+                        <option value="석식">석식</option>
+                        <option value="보고">보고</option>
+                    </select>
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="주요 내용을 입력하세요" 
+                           onchange="app.updateTimeSchedule(0, 'content', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="time" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           onchange="app.updateTimeSchedule(0, 'time', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="담당자를 입력하세요" 
+                           onchange="app.updateTimeSchedule(0, 'responsible', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <button onclick="app.removeTimeRow(0)" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            
+            // 데이터 구조에 기본 행 추가
+            this.currentData.timeSchedule[0] = {
+                type: '',
+                content: '',
+                time: '',
+                responsible: ''
+            };
         }
         
-        // 기본 참석자 행 추가
+        // 기본 참석자 행 추가 (직접 생성, addAttendeeRow() 호출하지 않음)
         if (this.currentData.attendeeList.length === 0) {
-            this.addAttendeeRow();
+            const tbody = document.getElementById('attendeeTableBody');
+            const row = document.createElement('tr');
+            row.className = 'table-row-hover';
+            row.innerHTML = `
+                <td class="px-4 py-3 border-b text-center">1</td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="성명을 입력하세요" 
+                           onchange="app.updateAttendeeList(0, 'name', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="직급을 입력하세요" 
+                           onchange="app.updateAttendeeList(0, 'position', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            onchange="app.updateAttendeeList(0, 'department', this.value)">
+                        <option value="">선택하세요</option>
+                        <option value="SI사업본부">SI사업본부</option>
+                        <option value="AI사업본부">AI사업본부</option>
+                        <option value="전략사업본부">전략사업본부</option>
+                        <option value="경영관리본부">경영관리본부</option>
+                        <option value="직접입력">직접입력</option>
+                    </select>
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                           placeholder="소속을 직접 입력하세요" 
+                           onchange="app.updateAttendeeList(0, 'department', this.value)"
+                           id="departmentInput_0">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="업무를 입력하세요" 
+                           onchange="app.updateAttendeeList(0, 'work', this.value)">
+                </td>
+                <td class="px-4 py-3 border-b">
+                    <button onclick="app.removeAttendeeRow(0)" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            
+            // 데이터 구조에 기본 행 추가
+            this.currentData.attendeeList[0] = {
+                name: '',
+                position: '',
+                department: '',
+                work: ''
+            };
         }
     }
 
@@ -611,18 +738,30 @@ class SeminarPlanningApp {
         const modal = document.getElementById('searchModal');
         modal.classList.remove('hidden');
         
+        // 메인 화면 스크롤 방지
+        document.body.style.overflow = 'hidden';
+        
         // 모달 이벤트 바인딩
         this.bindSearchModalEvents();
         
         // 전체 데이터 조회
         this.searchSeminars();
     }
+    
+    // 조회 모달 닫기
+    closeSearchModal() {
+        const modal = document.getElementById('searchModal');
+        modal.classList.add('hidden');
+        
+        // 메인 화면 스크롤 복원
+        document.body.style.overflow = '';
+    }
 
     // 조회 모달 이벤트 바인딩
     bindSearchModalEvents() {
         // 모달 닫기
         document.getElementById('closeSearchModal').addEventListener('click', () => {
-            document.getElementById('searchModal').classList.add('hidden');
+            this.closeSearchModal();
         });
 
         // 등록 버튼
@@ -749,7 +888,7 @@ class SeminarPlanningApp {
             
             if (result.success) {
                 // 모달 닫기
-                document.getElementById('searchModal').classList.add('hidden');
+                this.closeSearchModal();
                 
                 // 메인 화면에 데이터 로드
                 this.currentData = result.data;
@@ -798,7 +937,7 @@ class SeminarPlanningApp {
     addNewSeminar() {
         try {
             // 모달 닫기
-            document.getElementById('searchModal').classList.add('hidden');
+            this.closeSearchModal();
             
             // 메인 화면 초기화
             this.initializeMainForm();
@@ -840,7 +979,7 @@ class SeminarPlanningApp {
         document.getElementById('timeTableBody').innerHTML = '';
         document.getElementById('attendeeTableBody').innerHTML = '';
         
-        // 기본 행 추가
+        // 기본 행 추가 (직접 생성)
         this.addDefaultRows();
     }
 
@@ -1016,17 +1155,13 @@ class SeminarPlanningApp {
         try {
             this.showLoading(true);
             
-            // jsPDF 라이브러리 확인 및 다양한 접근 방법 시도
-            let jsPDFClass;
-            if (typeof jsPDF !== 'undefined') {
-                jsPDFClass = jsPDF;
-                console.log('jsPDF 직접 접근 성공');
-            } else if (typeof window.jsPDF !== 'undefined') {
-                jsPDFClass = window.jsPDF;
-                console.log('window.jsPDF 접근 성공');
-            } else {
+            // jsPDF 라이브러리 확인
+            const jsPDFClass = this.getLibraryInstance('jsPDF');
+            if (!jsPDFClass) {
                 throw new Error('jsPDF 라이브러리를 불러올 수 없습니다. 페이지를 새로고침하거나 라이브러리 로딩을 확인해주세요.');
             }
+            
+            console.log('🎯 jsPDF 라이브러리 접근 성공');
 
             const doc = new jsPDFClass();
             
@@ -1117,16 +1252,12 @@ class SeminarPlanningApp {
             this.showLoading(true);
             
             // XLSX 라이브러리 확인
-            let XLSXClass;
-            if (typeof XLSX !== 'undefined') {
-                XLSXClass = XLSX;
-                console.log('XLSX 직접 접근 성공');
-            } else if (typeof window.XLSX !== 'undefined') {
-                XLSXClass = window.XLSX;
-                console.log('window.XLSX 접근 성공');
-            } else {
+            const XLSXClass = this.getLibraryInstance('XLSX');
+            if (!XLSXClass) {
                 throw new Error('XLSX 라이브러리를 불러올 수 없습니다.');
             }
+            
+            console.log('🎯 XLSX 라이브러리 접근 성공');
 
             // 워크북 생성
             const wb = XLSXClass.utils.book_new();
@@ -1192,16 +1323,12 @@ class SeminarPlanningApp {
             this.showLoading(true);
             
             // docx 라이브러리 확인
-            let docxClass;
-            if (typeof docx !== 'undefined') {
-                docxClass = docx;
-                console.log('docx 직접 접근 성공');
-            } else if (typeof window.docx !== 'undefined') {
-                docxClass = window.docx;
-                console.log('window.docx 접근 성공');
-            } else {
+            const docxClass = this.getLibraryInstance('docx');
+            if (!docxClass) {
                 throw new Error('docx 라이브러리를 불러올 수 없습니다.');
             }
+            
+            console.log('🎯 docx 라이브러리 접근 성공');
 
             const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docxClass;
             
@@ -1342,12 +1469,7 @@ class SeminarPlanningApp {
             const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.docx`;
             
             docxClass.Packer.toBlob(doc).then(blob => {
-                let saveAsFunc;
-                if (typeof saveAs !== 'undefined') {
-                    saveAsFunc = saveAs;
-                } else if (typeof window.saveAs !== 'undefined') {
-                    saveAsFunc = window.saveAs;
-                }
+                const saveAsFunc = this.getLibraryInstance('saveAs');
                 
                 if (saveAsFunc) {
                     saveAsFunc(blob, fileName);
