@@ -1375,6 +1375,8 @@ class SeminarPlanningApp {
             }).catch(() => {
                 console.log('🔄 PDFMake 로딩 실패, HTML to PDF 방식 사용');
                 this.exportToPDFWithHTML();
+            }).finally(() => {
+                // 로딩 상태 해제는 각 함수에서 처리
             });
             
         } catch (error) {
@@ -1434,6 +1436,23 @@ class SeminarPlanningApp {
                 return String(text).replace(/[\x00-\x1F\x7F-\x9F]/g, '').trim();
             };
             
+            // 일시 형식 변환 함수 (T를 공백으로 변경하고 요일 추가)
+            const formatDateTime = (dateTime) => {
+                if (!dateTime) return '';
+                const dateStr = String(dateTime).replace('T', ' ');
+                
+                // 날짜 부분에서 요일 추출
+                const dateMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch) {
+                    const date = new Date(dateMatch[1]);
+                    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                    const weekday = weekdays[date.getDay()];
+                    return dateStr.replace(/^(\d{4}-\d{2}-\d{2})/, `$1 (${weekday})`);
+                }
+                
+                return dateStr;
+            };
+            
             // PDF 문서 정의
             const docDefinition = {
                 pageSize: 'A4',
@@ -1466,7 +1485,7 @@ class SeminarPlanningApp {
                                 ],
                                 [
                                     { text: '2. 일시/장소', style: 'tableHeader' },
-                                    { text: (safeText(this.currentData.datetime) || '미입력') + ' / ' + (safeText(this.currentData.location) || '미입력'), style: 'tableCell' }
+                                    { text: (formatDateTime(safeText(this.currentData.datetime)) || '미입력') + ' / ' + (safeText(this.currentData.location) || '미입력'), style: 'tableCell' }
                                 ],
                                 [
                                     { text: '3. 참석 대상', style: 'tableHeader' },
@@ -1575,14 +1594,17 @@ class SeminarPlanningApp {
                 const pdfDoc = pdfMake.createPdf(docDefinition);
                 pdfDoc.download(fileName);
                 this.showSuccessToast('PDF가 성공적으로 내보내졌습니다. (PDFMake 사용)');
+                this.showLoading(false); // 성공 시 로딩 해제
             } catch (pdfError) {
                 console.error('PDFMake PDF 생성 오류:', pdfError);
+                this.showLoading(false); // 오류 시 로딩 해제
                 throw new Error(`PDF 생성 실패: ${pdfError.message}`);
             }
             
         } catch (error) {
             console.error('PDFMake PDF 생성 오류:', error);
             console.log('🔄 HTML to PDF 방식으로 대체');
+            this.showLoading(false); // 오류 시 로딩 해제
             this.exportToPDFWithHTML();
         }
     }
@@ -1595,20 +1617,50 @@ class SeminarPlanningApp {
             // HTML 콘텐츠 생성
             const htmlContent = this.generatePDFHTML();
             
-            // 새 창에서 HTML 열기
-            const newWindow = window.open('', '_blank', 'width=800,height=600');
-            newWindow.document.write(htmlContent);
-            newWindow.document.close();
+            // 한국어 파일명 생성
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fileName = `전사 신기술 세미나 실행계획_${year}${month}${day}.pdf`;
             
-            // 인쇄 대화상자 열기
-            setTimeout(() => {
-                newWindow.print();
-                this.showSuccessToast('PDF 인쇄 대화상자가 열렸습니다. "PDF로 저장"을 선택하세요.');
-            }, 1000);
+            // Blob 생성
+            const blob = new Blob([htmlContent], { type: 'text/html; charset=UTF-8' });
+            const url = URL.createObjectURL(blob);
+            
+            // 새 창에서 HTML 열기 (about:blank 문제 해결)
+            const newWindow = window.open(url, '_blank', 'width=800,height=600');
+            
+            // 창이 로드된 후 처리
+            newWindow.onload = () => {
+                // 문서 제목 설정
+                newWindow.document.title = fileName.replace('.pdf', '');
+                
+                // 인쇄 대화상자 열기
+                setTimeout(() => {
+                    newWindow.print();
+                    this.showSuccessToast(`PDF 인쇄 대화상자가 열렸습니다. 파일명: ${fileName}`);
+                    this.showLoading(false); // 성공 시 로딩 해제
+                    
+                    // URL 정리
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                }, 500);
+            };
+            
+            // 창 로드 실패 시 처리
+            newWindow.onerror = () => {
+                console.error('HTML 창 로드 실패');
+                this.showErrorToast('PDF 생성 창을 열 수 없습니다.');
+                this.showLoading(false);
+                URL.revokeObjectURL(url);
+            };
             
         } catch (error) {
             console.error('HTML to PDF 오류:', error);
             this.showErrorToast(`PDF 내보내기 실패: ${error.message}`);
+            this.showLoading(false); // 오류 시 로딩 해제
         }
     }
 
@@ -1643,11 +1695,32 @@ class SeminarPlanningApp {
     generatePDFHTML() {
         const today = new Date();
         const dateString = today.toLocaleDateString('ko-KR');
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const fileName = `전사 신기술 세미나 실행계획_${year}${month}${day}`;
         
         // 안전한 텍스트 처리 함수
         const safeText = (text) => {
             if (!text) return '미입력';
             return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        };
+        
+        // 일시 형식 변환 함수 (T를 공백으로 변경하고 요일 추가)
+        const formatDateTime = (dateTime) => {
+            if (!dateTime) return '';
+            const dateStr = String(dateTime).replace('T', ' ');
+            
+            // 날짜 부분에서 요일 추출
+            const dateMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+            if (dateMatch) {
+                const date = new Date(dateMatch[1]);
+                const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                const weekday = weekdays[date.getDay()];
+                return dateStr.replace(/^(\d{4}-\d{2}-\d{2})/, `$1 (${weekday})`);
+            }
+            
+            return dateStr;
         };
         
         let html = `
@@ -1656,10 +1729,17 @@ class SeminarPlanningApp {
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>${fileName}</title>
+    <meta name="author" content="(주)경포씨엔씨">
+    <meta name="description" content="전사 신기술 세미나 실행계획서">
+    <meta name="keywords" content="세미나, 실행계획, KPCNC">
     <style>
         @page {
             size: A4;
             margin: 2cm;
+            @top-center {
+                content: "${fileName}";
+            }
         }
         * {
             font-family: '맑은 고딕', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans CJK KR', sans-serif !important;
@@ -1746,7 +1826,7 @@ class SeminarPlanningApp {
             <span class="info-label">1. 목표:</span> ${safeText(this.currentData.objective)}
         </div>
         <div class="info-item">
-            <span class="info-label">2. 일시/장소:</span> ${safeText(this.currentData.datetime)} / ${safeText(this.currentData.location)}
+            <span class="info-label">2. 일시/장소:</span> ${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}
         </div>
         <div class="info-item">
             <span class="info-label">3. 참석 대상:</span> ${safeText(this.currentData.attendees)}
