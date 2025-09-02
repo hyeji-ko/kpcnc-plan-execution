@@ -1367,8 +1367,18 @@ class SeminarPlanningApp {
     exportToPDF() {
         try {
             this.showLoading(true);
-            console.log('🔄 HTML to PDF 방식으로 PDF 생성');
-            this.exportToPDFWithHTML();
+            
+            // PDFMake 라이브러리 로딩 대기 및 확인
+            this.waitForPDFMake().then(() => {
+                console.log('✅ PDFMake 라이브러리 사용');
+                this.exportToPDFWithPDFMake();
+            }).catch(() => {
+                console.log('🔄 PDFMake 로딩 실패, HTML to PDF 방식 사용');
+                this.exportToPDFWithHTML();
+            }).finally(() => {
+                // 로딩 상태 해제는 각 함수에서 처리
+            });
+            
         } catch (error) {
             console.error('PDF 내보내기 오류:', error);
             this.showErrorToast(`PDF 내보내기 실패: ${error.message}`);
@@ -1376,9 +1386,263 @@ class SeminarPlanningApp {
         }
     }
 
+    // PDFMake 라이브러리 로딩 대기
+    waitForPDFMake() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 100; // 10초 대기 (100ms * 100)
+            
+            const checkPDFMake = () => {
+                attempts++;
+                
+                if (window.pdfMake && window.pdfMake.fonts) {
+                    console.log('✅ PDFMake 라이브러리 로딩 확인 완료');
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    console.warn('⚠️ PDFMake 로딩 시간 초과 (10초)');
+                    reject(new Error('PDFMake 로딩 시간 초과'));
+                } else {
+                    setTimeout(checkPDFMake, 100);
+                }
+            };
+            
+            checkPDFMake();
+        });
+    }
 
+    // PDFMake를 사용한 PDF 생성 (한국어 완벽 지원)
+    exportToPDFWithPDFMake() {
+        try {
+            // PDFMake 라이브러리 로딩 확인
+            if (!window.pdfMake) {
+                console.warn('⚠️ PDFMake 라이브러리가 로드되지 않았습니다. HTML to PDF 방식으로 전환합니다.');
+                this.exportToPDFWithHTML();
+                return;
+            }
+            
+            // PDFMake 폰트 확인
+            if (!window.pdfMake.fonts) {
+                console.warn('⚠️ PDFMake 폰트가 로드되지 않았습니다. HTML to PDF 방식으로 전환합니다.');
+                this.exportToPDFWithHTML();
+                return;
+            }
+            
+            console.log('✅ PDFMake 라이브러리 로드 완료');
+            console.log('📋 사용 가능한 폰트:', Object.keys(window.pdfMake.fonts));
+            
+            // 안전한 텍스트 처리 함수
+            const safeText = (text) => {
+                if (!text) return '';
+                return String(text).replace(/[\x00-\x1F\x7F-\x9F]/g, '').trim();
+            };
+            
+            // 일시 형식 변환 함수 (T를 공백으로 변경하고 요일 추가)
+            const formatDateTime = (dateTime) => {
+                if (!dateTime) return '';
+                const dateStr = String(dateTime).replace('T', ' ');
+                
+                // 날짜 부분에서 요일 추출
+                const dateMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch) {
+                    const date = new Date(dateMatch[1]);
+                    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                    const weekday = weekdays[date.getDay()];
+                    return dateStr.replace(/^(\d{4}-\d{2}-\d{2})/, `$1 (${weekday})`);
+                }
+                
+                return dateStr;
+            };
+            
+            // 목표 필드에서 □ 문자를 만나면 다음 라인으로 처리하는 함수
+            const formatObjective = (objective) => {
+                if (!objective) return '';
+                const text = String(objective);
+                
+                // □ 문자를 기준으로 분할
+                const parts = text.split('□');
+                if (parts.length <= 1) return text;
+                
+                const result = [];
+                result.push(parts[0]); // 첫 번째 부분
+                
+                // 나머지 부분들을 4칸 들여쓰기와 함께 추가
+                for (let i = 1; i < parts.length; i++) {
+                    if (parts[i].trim()) {
+                        result.push({
+                            text: '    ' + parts[i], // 4칸 들여쓰기
+                            margin: [0, 2, 0, 0] // 위쪽 여백
+                        });
+                    }
+                }
+                
+                return result;
+            };
+            
+            // PDF 문서 정의
+            const docDefinition = {
+                pageSize: 'A4',
+                pageMargins: [40, 60, 40, 60],
+                defaultStyle: {
+                    fontSize: 10
+                },
+                content: [
+                    // 제목
+                    {
+                        text: safeText(this.currentData.session) || '전사 신기술 세미나 실행계획',
+                        style: 'header',
+                        alignment: 'center',
+                        margin: [0, 0, 0, 20]
+                    },
+                    
+                    // 기본 정보
+                    {
+                        text: '기본 정보',
+                        style: 'sectionHeader',
+                        margin: [0, 0,0, 10]
+                    },
+                    {
+                        table: {
+                            widths: ['*', '*'],
+                            body: [
+                                [
+                                    { text: '1. 목표', style: 'tableHeader' },
+                                    { text: formatObjective(safeText(this.currentData.objective)) || '미입력', style: 'tableCell' }
+                                ],
+                                [
+                                    { text: '2. 일시/장소', style: 'tableHeader' },
+                                    { text: (formatDateTime(safeText(this.currentData.datetime)) || '미입력') + ' / ' + (safeText(this.currentData.location) || '미입력'), style: 'tableCell' }
+                                ],
+                                [
+                                    { text: '3. 참석 대상', style: 'tableHeader' },
+                                    { text: safeText(this.currentData.attendees) || '미입력', style: 'tableCell' }
+                                ]
+                            ]
+                        },
+                        margin: [0, 0, 0, 20]
+                    }
+                ],
+                styles: {
+                    header: {
+                        fontSize: 18,
+                        bold: true
+                    },
+                    sectionHeader: {
+                        fontSize: 14,
+                        bold: true,
+                        color: '#2c3e50'
+                    },
+                    tableHeader: {
+                        fontSize: 10,
+                        bold: true,
+                        fillColor: '#ecf0f1'
+                    },
+                    tableHeaderCenter: {
+                        fontSize: 10,
+                        bold: true,
+                        fillColor: '#ecf0f1',
+                        alignment: 'center'
+                    },
+                    tableCell: {
+                        fontSize: 10
+                    },
+                    tableCellCenter: {
+                        fontSize: 10,
+                        alignment: 'center'
+                    }
+                }
+            };
 
+            // 시간 계획 테이블 추가
+            if (this.currentData.timeSchedule && this.currentData.timeSchedule.length > 0) {
+                const timeScheduleRows = [
+                    [
+                        { text: '구분', style: 'tableHeader' },
+                        { text: '주요 내용', style: 'tableHeader' },
+                        { text: '시간', style: 'tableHeader' },
+                        { text: '담당', style: 'tableHeader' }
+                    ]
+                ];
 
+                this.currentData.timeSchedule.forEach(item => {
+                    timeScheduleRows.push([
+                        { text: safeText(item.type) || '', style: 'tableCell' },
+                        { text: safeText(item.content) || '', style: 'tableCell' },
+                        { text: safeText(item.time) || '', style: 'tableCell' },
+                        { text: safeText(item.responsible) || '', style: 'tableCell' }
+                    ]);
+                });
+
+                docDefinition.content.push(
+                    { text: '4. 시간 계획', style: 'sectionHeader', margin: [0, 20, 0, 10] },
+                    {
+                        table: {
+                            widths: ['auto', '*', 'auto', 'auto'],
+                            body: timeScheduleRows
+                        },
+                        margin: [0, 0, 0, 20]
+                    }
+                );
+            }
+
+            // 참석자 명단 테이블 추가
+            if (this.currentData.attendeeList && this.currentData.attendeeList.length > 0) {
+                const attendeeRows = [
+                    [
+                        { text: 'No', style: 'tableHeaderCenter' },
+                        { text: '성명', style: 'tableHeaderCenter' },
+                        { text: '직급', style: 'tableHeaderCenter' },
+                        { text: '소속', style: 'tableHeader' },
+                        { text: '업무', style: 'tableHeader' }
+                    ]
+                ];
+
+                this.currentData.attendeeList.forEach((item, index) => {
+                    attendeeRows.push([
+                        { text: (index + 1).toString(), style: 'tableCellCenter' },
+                        { text: safeText(item.name) || '', style: 'tableCellCenter' },
+                        { text: safeText(item.position) || '', style: 'tableCellCenter' },
+                        { text: safeText(item.department) || '', style: 'tableCell' },
+                        { text: safeText(item.work) || '', style: 'tableCell' }
+                    ]);
+                });
+
+                docDefinition.content.push(
+                    { text: '[별첨] 세미나 참석 명단', style: 'sectionHeader', margin: [0, 20, 0, 10] },
+                    {
+                        table: {
+                            widths: ['auto', '*', '*', '*', '*'],
+                            body: attendeeRows
+                        }
+                    }
+                );
+            }
+
+            // 한국어 파일명 생성
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fileName = `세미나_실행계획_${year}${month}${day}.pdf`;
+
+            // PDF 생성 및 다운로드
+            try {
+                const pdfDoc = pdfMake.createPdf(docDefinition);
+                pdfDoc.download(fileName);
+                this.showSuccessToast('PDF가 성공적으로 내보내졌습니다. (PDFMake 사용)');
+                this.showLoading(false); // 성공 시 로딩 해제
+            } catch (pdfError) {
+                console.error('PDFMake PDF 생성 오류:', pdfError);
+                this.showLoading(false); // 오류 시 로딩 해제
+                throw new Error(`PDF 생성 실패: ${pdfError.message}`);
+            }
+            
+        } catch (error) {
+            console.error('PDFMake PDF 생성 오류:', error);
+            console.log('🔄 HTML to PDF 방식으로 대체');
+            this.showLoading(false); // 오류 시 로딩 해제
+            this.exportToPDFWithHTML();
+        }
+    }
 
     // HTML to PDF 방식 (대체 방법)
     exportToPDFWithHTML() {
@@ -1713,6 +1977,9 @@ class SeminarPlanningApp {
             </tbody>
         </table>
     </div>
+`;
+        }
+
 </body>
 </html>
 `;
