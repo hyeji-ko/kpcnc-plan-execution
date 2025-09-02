@@ -25,127 +25,89 @@ class SeminarPlanningApp {
 
     
 
-    // 라이브러리 로딩 상태 확인
+    // 간단한 라이브러리 상태 확인
     async checkLibraries() {
-        console.log('🔍 라이브러리 로딩 상태 확인 시작...');
+        console.log('🔍 내보내기 라이브러리 상태 확인 중...');
         
-        // LibraryLoader가 준비될 때까지 대기
+        // exportLibraries 객체가 준비될 때까지 대기
         let attempts = 0;
-        const maxAttempts = 100; // 최대 10초 대기
+        const maxAttempts = 30; // 최대 3초 대기
         
         while (attempts < maxAttempts) {
-            if (window.LibraryLoader && window.loadedLibrariesStatus) {
-                const statusKeys = Object.keys(window.loadedLibrariesStatus);
-                if (statusKeys.length === 5) { // 5개 라이브러리 모두 상태 확인됨
-                    console.log('✅ LibraryLoader 준비 완료');
-                    break;
-                }
+            if (window.exportLibraries) {
+                console.log('✅ 내보내기 라이브러리 상태 확인 완료');
+                break;
             }
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
         
         if (attempts === maxAttempts) {
-            console.error('❌ LibraryLoader 준비 시간 초과');
-            return;
+            console.warn('⚠️ 내보내기 라이브러리 상태 확인 시간 초과');
         }
         
-        // 라이브러리 상태 확인
-        const libraries = {
-            jsPDF: this.getLibrary('jsPDF'),
-            jspdfAutotable: this.getLibrary('jspdfAutotable'),
-            XLSX: this.getLibrary('XLSX'),
-            docx: this.getLibrary('docx'),
-            saveAs: this.getLibrary('saveAs')
-        };
-        
-        console.log('📚 라이브러리 로딩 상태:', libraries);
-        
-        // 로딩 실패한 라이브러리 재시도
-        const failedLibraries = Object.entries(libraries).filter(([name, loaded]) => !loaded);
-        if (failedLibraries.length > 0) {
-            console.log(`🔄 로딩 실패한 라이브러리 재시도: ${failedLibraries.map(([name]) => name).join(', ')}`);
-            
-            for (const [libName] of failedLibraries) {
-                try {
-                    await window.LibraryLoader.reloadLibrary(libName);
-                    // 재로딩 후 상태 업데이트
-                    window.loadedLibrariesStatus[libName] = window.LibraryLoader.isLibraryLoaded(libName);
-                } catch (error) {
-                    console.error(`❌ ${libName} 재로딩 실패:`, error);
-                }
-            }
-            
-            // 재시도 후 상태 재확인
-            Object.keys(libraries).forEach(name => {
-                libraries[name] = this.getLibrary(name);
-            });
-        }
-        
-        // 최종 상태 출력
-        for (const lib in libraries) {
-            if (!libraries[lib]) {
-                console.warn(`⚠️ 경고: ${lib} 라이브러리가 로드되지 않았습니다.`);
-            } else {
-                console.log(`✅ ${lib} 라이브러리 로드 완료`);
-            }
+        // 라이브러리 상태 출력
+        if (window.exportLibraries) {
+            console.log('📊 내보내기 라이브러리 상태:', window.exportLibraries);
         }
     }
     
-    // 라이브러리 존재 여부 확인
+    // 라이브러리 존재 여부 확인 (간단한 방식)
     getLibrary(name) {
-        // LibraryLoader 상태 확인
-        if (window.LibraryLoader && window.LibraryLoader.isLibraryLoaded(name)) {
+        if (window.exportLibraries && window.exportLibraries[name]) {
             return true;
         }
         
-        // 전역 상태 확인
-        if (window.loadedLibrariesStatus && typeof window.loadedLibrariesStatus[name] !== 'undefined') {
-            return window.loadedLibrariesStatus[name];
+        // 특별한 경우들 처리
+        if (name === 'jsPDF' && (window.jsPDF || window.jspdf?.jsPDF)) {
+            return true;
+        }
+        if (name === 'XLSX' && window.XLSX) {
+            return true;
+        }
+        if (name === 'saveAs' && window.saveAs) {
+            return true;
+        }
+        if (name === 'docx' && window.docx) {
+            return true;
         }
         
-        // 직접 전역 객체 확인
-        return typeof window[name] !== 'undefined';
+        return false;
     }
 
-    // 라이브러리 인스턴스 반환 (전역 객체 또는 window 객체에서)
+    // 라이브러리 인스턴스 반환 (간단한 방식)
     getLibraryInstance(name) {
-        // LibraryLoader 상태 확인
-        if (window.LibraryLoader && !window.LibraryLoader.isLibraryLoaded(name)) {
+        // exportLibraries 상태 확인
+        if (window.exportLibraries && !window.exportLibraries[name]) {
             console.warn(`⚠️ ${name} 라이브러리가 로드되지 않았습니다.`);
             return null;
         }
         
-        // window 객체에서 직접 확인
-        if (typeof window[name] !== 'undefined') {
-            console.log(`🎯 ${name} 라이브러리 (window.${name}) 접근 성공`);
-            return window[name];
-        }
-        
-        // 전역 스코프에서 확인
-        if (typeof globalThis[name] !== 'undefined') {
-            console.log(`🎯 ${name} 라이브러리 (globalThis.${name}) 접근 성공`);
-            return globalThis[name];
-        }
-        
         // 특별한 경우들 처리
-        if (name === 'docx' && typeof docx !== 'undefined') {
-            console.log(`🎯 ${name} 라이브러리 (direct docx) 접근 성공`);
-            return docx;
-        }
-        if (name === 'jspdfAutotable' && typeof jspdfAutotable !== 'undefined') {
-            console.log(`🎯 ${name} 라이브러리 (direct jspdfAutotable) 접근 성공`);
-            return jspdfAutotable;
-        }
-        if (name === 'saveAs' && typeof saveAs !== 'undefined') {
-            console.log(`🎯 ${name} 라이브러리 (direct saveAs) 접근 성공`);
-            return saveAs;
+        if (name === 'jsPDF') {
+            if (window.jsPDF) {
+                console.log(`🎯 ${name} 라이브러리 (window.jsPDF) 접근 성공`);
+                return window.jsPDF;
+            }
+            if (window.jspdf?.jsPDF) {
+                console.log(`🎯 ${name} 라이브러리 (window.jspdf.jsPDF) 접근 성공`);
+                return window.jspdf.jsPDF;
+            }
         }
         
-        // jsPDF 특별 처리
-        if (name === 'jsPDF' && window.jspdf?.jsPDF) {
-            console.log(`🎯 ${name} 라이브러리 (window.jspdf.jsPDF) 접근 성공`);
-            return window.jspdf.jsPDF;
+        if (name === 'XLSX' && window.XLSX) {
+            console.log(`🎯 ${name} 라이브러리 (window.XLSX) 접근 성공`);
+            return window.XLSX;
+        }
+        
+        if (name === 'saveAs' && window.saveAs) {
+            console.log(`🎯 ${name} 라이브러리 (window.saveAs) 접근 성공`);
+            return window.saveAs;
+        }
+        
+        if (name === 'docx' && window.docx) {
+            console.log(`🎯 ${name} 라이브러리 (window.docx) 접근 성공`);
+            return window.docx;
         }
         
         console.error(`❌ ${name} 라이브러리를 찾을 수 없습니다.`);
@@ -1407,12 +1369,18 @@ class SeminarPlanningApp {
             this.showLoading(true);
             
             // jsPDF 라이브러리 확인
-            const jsPDFClass = this.getLibraryInstance('jsPDF');
-            if (!jsPDFClass) {
-                throw new Error('jsPDF 라이브러리를 불러올 수 없습니다. 페이지를 새로고침하거나 라이브러리 로딩을 확인해주세요.');
-            }
+            let jsPDFClass = null;
             
-            console.log('🎯 jsPDF 라이브러리 접근 성공');
+            // 여러 방법으로 jsPDF 찾기
+            if (window.jsPDF) {
+                jsPDFClass = window.jsPDF;
+                console.log('✅ jsPDF (window.jsPDF) 사용');
+            } else if (window.jspdf && window.jspdf.jsPDF) {
+                jsPDFClass = window.jspdf.jsPDF;
+                console.log('✅ jsPDF (window.jspdf.jsPDF) 사용');
+            } else {
+                throw new Error('PDF 생성 라이브러리를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+            }
 
             const doc = new jsPDFClass();
             
@@ -1428,78 +1396,115 @@ class SeminarPlanningApp {
             
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            doc.text(`회차: ${this.currentData.session || '미입력'}`, 20, 55);
-            doc.text(`목표: ${this.currentData.objective || '미입력'}`, 20, 65);
-            doc.text(`일시: ${this.currentData.datetime || '미입력'}`, 20, 75);
-            doc.text(`장소: ${this.currentData.location || '미입력'}`, 20, 85);
-            doc.text(`참석 대상: ${this.currentData.attendees || '미입력'}`, 20, 95);
+            
+            // 기본 정보 데이터
+            const basicInfo = [
+                { label: '회차', value: this.currentData.session || '미입력' },
+                { label: '목표', value: this.currentData.objective || '미입력' },
+                { label: '일시', value: this.currentData.datetime || '미입력' },
+                { label: '장소', value: this.currentData.location || '미입력' },
+                { label: '참석 대상', value: this.currentData.attendees || '미입력' }
+            ];
+            
+            let y = 55;
+            basicInfo.forEach(info => {
+                // 긴 텍스트는 여러 줄로 분할
+                const lines = this.splitTextToFit(info.value, 150);
+                lines.forEach(line => {
+                    doc.text(`${info.label}: ${line}`, 20, y);
+                    y += 8;
+                });
+                y += 5; // 항목 간 간격
+            });
             
             // 시간 계획 테이블
             if (this.currentData.timeSchedule.length > 0) {
+                y = Math.max(y + 10, 120); // 기본 정보 다음 위치
+                
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
-                doc.text('시간 계획', 20, 105);
+                doc.text('시간 계획', 20, y);
+                y += 15;
                 
-                const timeTableData = this.currentData.timeSchedule.map(item => [
-                    item.type || '',
-                    item.content || '',
-                    item.time || '',
-                    item.responsible || ''
-                ]);
+                // 테이블 헤더
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text('구분', 20, y);
+                doc.text('주요 내용', 50, y);
+                doc.text('시간', 120, y);
+                doc.text('담당', 160, y);
                 
-                // jspdf-autotable 플러그인 사용
-                const jspdfAutotable = this.getLibraryInstance('jspdfAutotable');
-                if (jspdfAutotable) {
-                    doc.autoTable({
-                        startY: 115,
-                        head: [['구분', '주요 내용', '시간', '담당']],
-                        body: timeTableData,
-                        theme: 'grid',
-                        headStyles: { fillColor: [59, 130, 246] }
+                // 구분선 그리기
+                doc.line(20, y + 2, 190, y + 2);
+                y += 10;
+                
+                // 테이블 데이터
+                doc.setFont('helvetica', 'normal');
+                this.currentData.timeSchedule.forEach(item => {
+                    if (y > 270) { // 페이지 끝에 가까우면 새 페이지
+                        doc.addPage();
+                        y = 20;
+                    }
+                    
+                    doc.text(item.type || '', 20, y);
+                    
+                    // 주요 내용은 여러 줄로 분할
+                    const contentLines = this.splitTextToFit(item.content || '', 60);
+                    contentLines.forEach((line, index) => {
+                        doc.text(line, 50, y + (index * 6));
                     });
-                } else {
-                    // 플러그인이 없는 경우 간단한 테이블로 대체
-                    let y = 115;
-                    timeTableData.forEach(row => {
-                        doc.text(row.join(' | '), 20, y);
-                        y += 7;
-                    });
-                }
+                    
+                    doc.text(item.time || '', 120, y);
+                    doc.text(item.responsible || '', 160, y);
+                    
+                    // 다음 행 위치 계산 (가장 긴 내용 기준)
+                    y += Math.max(8, contentLines.length * 6 + 2);
+                });
             }
             
             // 참석자 명단 테이블
             if (this.currentData.attendeeList.length > 0) {
-                const lastY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 160;
+                let lastY = Math.max(y + 15, 160);
+                
+                // 새 페이지 필요 여부 확인
+                if (lastY > 200) {
+                    doc.addPage();
+                    lastY = 20;
+                }
+                
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.text('세미나 참석 명단', 20, lastY);
+                lastY += 15;
                 
-                const attendeeTableData = this.currentData.attendeeList.map((item, index) => [
-                    (index + 1).toString(),
-                    item.name || '',
-                    item.position || '',
-                    item.department || '',
-                    item.work || ''
-                ]);
+                // 테이블 헤더
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text('No', 20, lastY);
+                doc.text('성명', 35, lastY);
+                doc.text('직급', 70, lastY);
+                doc.text('소속', 100, lastY);
+                doc.text('업무', 140, lastY);
                 
-                // jspdf-autotable 플러그인 사용
-                const jspdfAutotable = this.getLibraryInstance('jspdfAutotable');
-                if (jspdfAutotable) {
-                    doc.autoTable({
-                        startY: lastY + 5,
-                        head: [['No', '성명', '직급', '소속', '업무']],
-                        body: attendeeTableData,
-                        theme: 'grid',
-                        headStyles: { fillColor: [147, 51, 234] }
-                    });
-                } else {
-                    // 플러그인이 없는 경우 간단한 테이블로 대체
-                    let y = lastY + 5;
-                    attendeeTableData.forEach(row => {
-                        doc.text(row.join(' | '), 20, y);
-                        y += 7;
-                    });
-                }
+                // 구분선 그리기
+                doc.line(20, lastY + 2, 190, lastY + 2);
+                lastY += 10;
+                
+                // 테이블 데이터
+                doc.setFont('helvetica', 'normal');
+                this.currentData.attendeeList.forEach((item, index) => {
+                    if (lastY > 270) { // 페이지 끝에 가까우면 새 페이지
+                        doc.addPage();
+                        lastY = 20;
+                    }
+                    
+                    doc.text((index + 1).toString(), 20, lastY);
+                    doc.text(item.name || '', 35, lastY);
+                    doc.text(item.position || '', 70, lastY);
+                    doc.text(item.department || '', 100, lastY);
+                    doc.text(item.work || '', 140, lastY);
+                    lastY += 8;
+                });
             }
             
             // 파일 저장
@@ -1515,20 +1520,48 @@ class SeminarPlanningApp {
         }
     }
 
+    // 텍스트를 PDF에 맞게 분할하는 헬퍼 함수
+    splitTextToFit(text, maxWidth) {
+        if (!text) return [''];
+        
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        words.forEach(word => {
+            const testLine = currentLine + (currentLine ? ' ' : '') + word;
+            if (testLine.length * 2.5 <= maxWidth) { // 대략적인 폰트 크기 계산
+                currentLine = testLine;
+            } else {
+                if (currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    lines.push(word);
+                }
+            }
+        });
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        return lines.length > 0 ? lines : [''];
+    }
+
     exportToExcel() {
         try {
             this.showLoading(true);
             
             // XLSX 라이브러리 확인
-            const XLSXClass = this.getLibraryInstance('XLSX');
-            if (!XLSXClass) {
-                throw new Error('XLSX 라이브러리를 불러올 수 없습니다.');
+            if (!window.XLSX) {
+                throw new Error('Excel 생성 라이브러리를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
             }
             
-            console.log('🎯 XLSX 라이브러리 접근 성공');
+            console.log('✅ XLSX 라이브러리 사용');
 
             // 워크북 생성
-            const wb = XLSXClass.utils.book_new();
+            const wb = window.XLSX.utils.book_new();
             
             // 기본 정보 시트
             const basicInfoData = [
@@ -1570,12 +1603,12 @@ class SeminarPlanningApp {
                 ]);
             });
             
-            const basicInfoSheet = XLSXClass.utils.aoa_to_sheet(basicInfoData);
-            XLSXClass.utils.book_append_sheet(wb, basicInfoSheet, '세미나 실행계획');
+            const basicInfoSheet = window.XLSX.utils.aoa_to_sheet(basicInfoData);
+            window.XLSX.utils.book_append_sheet(wb, basicInfoSheet, '세미나 실행계획');
             
             // 파일 저장
             const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSXClass.writeFile(wb, fileName);
+            window.XLSX.writeFile(wb, fileName);
             
             this.showSuccessToast('Excel 파일이 성공적으로 내보내졌습니다.');
         } catch (error) {
@@ -1591,14 +1624,13 @@ class SeminarPlanningApp {
             this.showLoading(true);
             
             // docx 라이브러리 확인
-            const docxClass = this.getLibraryInstance('docx');
-            if (!docxClass) {
-                throw new Error('docx 라이브러리를 불러올 수 없습니다.');
+            if (!window.docx) {
+                throw new Error('Word 문서 생성 라이브러리를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
             }
             
-            console.log('🎯 docx 라이브러리 접근 성공');
+            console.log('✅ docx 라이브러리 사용');
 
-            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docxClass;
+            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = window.docx;
             
             // 문서 생성
             const doc = new Document({
@@ -1736,11 +1768,9 @@ class SeminarPlanningApp {
             // 파일 생성 및 저장
             const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.docx`;
             
-            docxClass.Packer.toBlob(doc).then(blob => {
-                const saveAsFunc = this.getLibraryInstance('saveAs');
-                
-                if (saveAsFunc) {
-                    saveAsFunc(blob, fileName);
+            window.docx.Packer.toBlob(doc).then(blob => {
+                if (window.saveAs) {
+                    window.saveAs(blob, fileName);
                     this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다.');
                 } else {
                     // FileSaver.js가 없는 경우 직접 다운로드
