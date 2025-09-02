@@ -1723,13 +1723,34 @@ class SeminarPlanningApp {
             return dateStr;
         };
         
+        // 목표 필드에서 □ 문자를 만나면 다음 라인으로 처리하는 함수 (HTML용)
+        const formatObjectiveHTML = (objective) => {
+            if (!objective) return '';
+            const text = String(objective);
+            
+            // □ 문자를 기준으로 분할
+            const parts = text.split('□');
+            if (parts.length <= 1) return text;
+            
+            let result = parts[0]; // 첫 번째 부분
+            
+            // 나머지 부분들을 4칸 들여쓰기와 함께 추가
+            for (let i = 1; i < parts.length; i++) {
+                if (parts[i].trim()) {
+                    result += '<br>&nbsp;&nbsp;&nbsp;&nbsp;' + parts[i]; // 4칸 들여쓰기
+                }
+            }
+            
+            return result;
+        };
+        
         let html = `
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>${fileName}</title>
+    <title> </title>
     <meta name="author" content="(주)경포씨엔씨">
     <meta name="description" content="전사 신기술 세미나 실행계획서">
     <meta name="keywords" content="세미나, 실행계획, KPCNC">
@@ -1799,6 +1820,35 @@ class SeminarPlanningApp {
             background-color: #ecf0f1;
             font-weight: bold;
         }
+        .center-align {
+            text-align: center;
+        }
+        .time-schedule-table {
+            width: 100%;
+        }
+        .time-schedule-table th:nth-child(1),
+        .time-schedule-table td:nth-child(1) {
+            width: 15%;
+        }
+        .time-schedule-table th:nth-child(2),
+        .time-schedule-table td:nth-child(2) {
+            width: 50%;
+        }
+        .time-schedule-table th:nth-child(3),
+        .time-schedule-table td:nth-child(3) {
+            width: 20%;
+        }
+        .time-schedule-table th:nth-child(4),
+        .time-schedule-table td:nth-child(4) {
+            width: 15%;
+        }
+        .attendee-table {
+            width: 100%;
+        }
+        .attendee-table th,
+        .attendee-table td {
+            width: 20%;
+        }
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -1823,13 +1873,13 @@ class SeminarPlanningApp {
     <div class="section">
         <h2>기본 정보</h2>
         <div class="info-item">
-            <span class="info-label">1. 목표:</span> ${safeText(this.currentData.objective)}
+            <h2><span class="info-label">1. 목표</span></h2>${formatObjectiveHTML(safeText(this.currentData.objective))}
         </div>
         <div class="info-item">
-            <span class="info-label">2. 일시/장소:</span> ${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}
+            <h2><span class="info-label">2. 일시/장소</span></h2><br>    □ ${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}
         </div>
         <div class="info-item">
-            <span class="info-label">3. 참석 대상:</span> ${safeText(this.currentData.attendees)}
+            <h2><span class="info-label">3. 참석 대상</span></h2><br>    □ ${safeText(this.currentData.attendees)}
         </div>
     </div>
 `;
@@ -1839,13 +1889,13 @@ class SeminarPlanningApp {
             html += `
     <div class="section">
         <h2>4. 시간 계획</h2>
-        <table>
+        <table class="time-schedule-table">
             <thead>
                 <tr>
-                    <th>구분</th>
+                    <th class="center-align">구분</th>
                     <th>주요 내용</th>
-                    <th>시간</th>
-                    <th>담당</th>
+                    <th class="center-align">시간</th>
+                    <th class="center-align">담당</th>
                 </tr>
             </thead>
             <tbody>
@@ -1853,10 +1903,10 @@ class SeminarPlanningApp {
             this.currentData.timeSchedule.forEach(item => {
                 html += `
                 <tr>
-                    <td>${safeText(item.type)}</td>
+                    <td class="center-align">${safeText(item.type)}</td>
                     <td>${safeText(item.content)}</td>
-                    <td>${safeText(item.time)}</td>
-                    <td>${safeText(item.responsible)}</td>
+                    <td class="center-align">${safeText(item.time)}</td>
+                    <td class="center-align">${safeText(item.responsible)}</td>
                 </tr>
 `;
             });
@@ -1872,14 +1922,14 @@ class SeminarPlanningApp {
             html += `
     <div class="section">
         <h2>[별첨] 세미나 참석 명단</h2>
-        <table>
+        <table class="attendee-table">
             <thead>
                 <tr>
-                    <th>No</th>
-                    <th>성명</th>
-                    <th>직급</th>
-                    <th>소속</th>
-                    <th>업무</th>
+                    <th class="center-align">No</th>
+                    <th class="center-align">성명</th>
+                    <th class="center-align">직급</th>
+                    <th class="center-align">소속</th>
+                    <th class="center-align">업무</th>
                 </tr>
             </thead>
             <tbody>
@@ -1887,11 +1937,11 @@ class SeminarPlanningApp {
             this.currentData.attendeeList.forEach((item, index) => {
                 html += `
                 <tr>
-                    <td>${index + 1}</td>
-                    <td>${safeText(item.name)}</td>
-                    <td>${safeText(item.position)}</td>
-                    <td>${safeText(item.department)}</td>
-                    <td>${safeText(item.work)}</td>
+                    <td class="center-align">${index + 1}</td>
+                    <td class="center-align">${safeText(item.name)}</td>
+                    <td class="center-align">${safeText(item.position)}</td>
+                    <td class="center-align">${safeText(item.department)}</td>
+                    <td class="center-align">${safeText(item.work)}</td>
                 </tr>
 `;
             });
@@ -1903,10 +1953,6 @@ class SeminarPlanningApp {
         }
 
         html += `
-    <div class="footer">
-        <p>생성일: ${dateString}</p>
-        <p>전사 신기술 세미나 실행계획 시스템</p>
-    </div>
 </body>
 </html>
 `;
@@ -2130,21 +2176,6 @@ class SeminarPlanningApp {
             this.showLoading(false);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     // 데이터 삭제 메서드
     async deleteData() {
