@@ -1384,23 +1384,32 @@ class SeminarPlanningApp {
 
             const doc = new jsPDFClass();
             
-            // 한국어 폰트 설정 (기본 폰트 사용하되 한국어 지원)
+            // UTF-8 인코딩 설정
+            doc.setProperties({
+                title: '전사 신기술 세미나 실행계획',
+                subject: '세미나 실행계획서',
+                author: 'KPCNC 시스템',
+                creator: 'KPCNC Plan Execution System'
+            });
+            
+            // 폰트 설정 (UTF-8 지원)
             doc.setFont('helvetica');
             
-            // 제목 추가 (한국어 지원)
+            // 제목 추가 (UTF-8 텍스트)
             doc.setFontSize(20);
             doc.setFont('helvetica', 'bold');
-            doc.text('전사 신기술 세미나 실행계획', 105, 20, { align: 'center' });
+            const title = this.ensureUTF8Text('전사 신기술 세미나 실행계획');
+            doc.text(title, 105, 20, { align: 'center' });
             
             // 기본 정보 섹션
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('기본 정보', 20, 40);
+            doc.text(this.ensureUTF8Text('기본 정보'), 20, 40);
             
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             
-            // 기본 정보 데이터
+            // 기본 정보 데이터 (UTF-8 처리)
             const basicInfo = [
                 { label: '회차', value: this.currentData.session || '미입력' },
                 { label: '목표', value: this.currentData.objective || '미입력' },
@@ -1411,11 +1420,12 @@ class SeminarPlanningApp {
             
             let y = 55;
             basicInfo.forEach(info => {
-                // 한국어 텍스트를 안전하게 처리
-                const safeValue = this.ensureKoreanText(info.value);
-                const lines = this.splitKoreanTextToFit(safeValue, 150);
+                // UTF-8 텍스트를 안전하게 처리
+                const safeLabel = this.ensureUTF8Text(info.label);
+                const safeValue = this.ensureUTF8Text(info.value);
+                const lines = this.splitUTF8TextToFit(safeValue, 150);
                 lines.forEach(line => {
-                    doc.text(`${info.label}: ${line}`, 20, y);
+                    doc.text(`${safeLabel}: ${line}`, 20, y);
                     y += 8;
                 });
                 y += 5; // 항목 간 간격
@@ -1427,22 +1437,22 @@ class SeminarPlanningApp {
                 
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
-                doc.text('시간 계획', 20, y);
+                doc.text(this.ensureUTF8Text('시간 계획'), 20, y);
                 y += 15;
                 
-                // 테이블 헤더
+                // 테이블 헤더 (UTF-8 처리)
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
-                doc.text('구분', 20, y);
-                doc.text('주요 내용', 50, y);
-                doc.text('시간', 120, y);
-                doc.text('담당', 160, y);
+                doc.text(this.ensureUTF8Text('구분'), 20, y);
+                doc.text(this.ensureUTF8Text('주요 내용'), 50, y);
+                doc.text(this.ensureUTF8Text('시간'), 120, y);
+                doc.text(this.ensureUTF8Text('담당'), 160, y);
                 
                 // 구분선 그리기
                 doc.line(20, y + 2, 190, y + 2);
                 y += 10;
                 
-                // 테이블 데이터
+                // 테이블 데이터 (UTF-8 처리)
                 doc.setFont('helvetica', 'normal');
                 this.currentData.timeSchedule.forEach(item => {
                     if (y > 270) { // 페이지 끝에 가까우면 새 페이지
@@ -1450,16 +1460,16 @@ class SeminarPlanningApp {
                         y = 20;
                     }
                     
-                    // 한국어 텍스트 안전 처리
-                    const safeType = this.ensureKoreanText(item.type || '');
-                    const safeContent = this.ensureKoreanText(item.content || '');
-                    const safeTime = this.ensureKoreanText(item.time || '');
-                    const safeResponsible = this.ensureKoreanText(item.responsible || '');
+                    // UTF-8 텍스트 안전 처리
+                    const safeType = this.ensureUTF8Text(item.type || '');
+                    const safeContent = this.ensureUTF8Text(item.content || '');
+                    const safeTime = this.ensureUTF8Text(item.time || '');
+                    const safeResponsible = this.ensureUTF8Text(item.responsible || '');
                     
                     doc.text(safeType, 20, y);
                     
                     // 주요 내용은 여러 줄로 분할
-                    const contentLines = this.splitKoreanTextToFit(safeContent, 60);
+                    const contentLines = this.splitUTF8TextToFit(safeContent, 60);
                     contentLines.forEach((line, index) => {
                         doc.text(line, 50, y + (index * 6));
                     });
@@ -1484,23 +1494,23 @@ class SeminarPlanningApp {
                 
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
-                doc.text('세미나 참석 명단', 20, lastY);
+                doc.text(this.ensureUTF8Text('세미나 참석 명단'), 20, lastY);
                 lastY += 15;
                 
-                // 테이블 헤더
+                // 테이블 헤더 (UTF-8 처리)
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
                 doc.text('No', 20, lastY);
-                doc.text('성명', 35, lastY);
-                doc.text('직급', 70, lastY);
-                doc.text('소속', 100, lastY);
-                doc.text('업무', 140, lastY);
+                doc.text(this.ensureUTF8Text('성명'), 35, lastY);
+                doc.text(this.ensureUTF8Text('직급'), 70, lastY);
+                doc.text(this.ensureUTF8Text('소속'), 100, lastY);
+                doc.text(this.ensureUTF8Text('업무'), 140, lastY);
                 
                 // 구분선 그리기
                 doc.line(20, lastY + 2, 190, lastY + 2);
                 lastY += 10;
                 
-                // 테이블 데이터
+                // 테이블 데이터 (UTF-8 처리)
                 doc.setFont('helvetica', 'normal');
                 this.currentData.attendeeList.forEach((item, index) => {
                     if (lastY > 270) { // 페이지 끝에 가까우면 새 페이지
@@ -1508,11 +1518,11 @@ class SeminarPlanningApp {
                         lastY = 20;
                     }
                     
-                    // 한국어 텍스트 안전 처리
-                    const safeName = this.ensureKoreanText(item.name || '');
-                    const safePosition = this.ensureKoreanText(item.position || '');
-                    const safeDepartment = this.ensureKoreanText(item.department || '');
-                    const safeWork = this.ensureKoreanText(item.work || '');
+                    // UTF-8 텍스트 안전 처리
+                    const safeName = this.ensureUTF8Text(item.name || '');
+                    const safePosition = this.ensureUTF8Text(item.position || '');
+                    const safeDepartment = this.ensureUTF8Text(item.department || '');
+                    const safeWork = this.ensureUTF8Text(item.work || '');
                     
                     doc.text((index + 1).toString(), 20, lastY);
                     doc.text(safeName, 35, lastY);
@@ -1541,25 +1551,31 @@ class SeminarPlanningApp {
         }
     }
 
-    // 한국어 텍스트를 안전하게 처리하는 함수
-    ensureKoreanText(text) {
+    // UTF-8 텍스트를 안전하게 처리하는 함수 (한국어/영어 모두 지원)
+    ensureUTF8Text(text) {
         if (!text) return '';
         
-        // 특수문자나 인코딩 문제가 있는 문자들을 안전하게 처리
+        // UTF-8 인코딩을 보장하고 안전한 문자만 허용
         return String(text)
             .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // 제어 문자 제거
-            .replace(/[^\u0020-\u007E\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/g, '') // 한글, 영문, 기본 특수문자만 허용
+            .replace(/[\uFEFF]/g, '') // BOM 제거
+            .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width 문자 제거
             .trim();
     }
 
-    // 한국어 텍스트를 PDF에 맞게 분할하는 헬퍼 함수
-    splitKoreanTextToFit(text, maxWidth) {
+    // 기존 함수명 유지 (호환성)
+    ensureKoreanText(text) {
+        return this.ensureUTF8Text(text);
+    }
+
+    // UTF-8 텍스트를 PDF에 맞게 분할하는 헬퍼 함수 (한국어/영어 모두 지원)
+    splitUTF8TextToFit(text, maxWidth) {
         if (!text) return [''];
         
-        const safeText = this.ensureKoreanText(text);
+        const safeText = this.ensureUTF8Text(text);
         if (!safeText) return [''];
         
-        // 한국어는 공백으로 분할하지 않고 문자 단위로 처리
+        // UTF-8 텍스트를 문자 단위로 처리
         const lines = [];
         let currentLine = '';
         
@@ -1588,6 +1604,11 @@ class SeminarPlanningApp {
         }
         
         return lines.length > 0 ? lines : [''];
+    }
+
+    // 기존 함수명 유지 (호환성)
+    splitKoreanTextToFit(text, maxWidth) {
+        return this.splitUTF8TextToFit(text, maxWidth);
     }
 
     // 문자 폭 계산 (한글은 2배 폭)
@@ -1651,43 +1672,43 @@ class SeminarPlanningApp {
             // 워크북 생성
             const wb = window.XLSX.utils.book_new();
             
-            // 기본 정보 시트
+            // 기본 정보 시트 (UTF-8 처리)
             const basicInfoData = [
-                ['전사 신기술 세미나 실행계획'],
+                [this.ensureUTF8Text('전사 신기술 세미나 실행계획')],
                 [''],
-                ['기본 정보'],
-                ['회차', this.currentData.session || '미입력'],
-                ['목표', this.currentData.objective || '미입력'],
-                ['일시', this.currentData.datetime || '미입력'],
-                ['장소', this.currentData.location || '미입력'],
-                ['참석 대상', this.currentData.attendees || '미입력'],
+                [this.ensureUTF8Text('기본 정보')],
+                [this.ensureUTF8Text('회차'), this.ensureUTF8Text(this.currentData.session || '미입력')],
+                [this.ensureUTF8Text('목표'), this.ensureUTF8Text(this.currentData.objective || '미입력')],
+                [this.ensureUTF8Text('일시'), this.ensureUTF8Text(this.currentData.datetime || '미입력')],
+                [this.ensureUTF8Text('장소'), this.ensureUTF8Text(this.currentData.location || '미입력')],
+                [this.ensureUTF8Text('참석 대상'), this.ensureUTF8Text(this.currentData.attendees || '미입력')],
                 [''],
-                ['시간 계획'],
-                ['구분', '주요 내용', '시간', '담당']
+                [this.ensureUTF8Text('시간 계획')],
+                [this.ensureUTF8Text('구분'), this.ensureUTF8Text('주요 내용'), this.ensureUTF8Text('시간'), this.ensureUTF8Text('담당')]
             ];
             
-            // 시간 계획 데이터 추가
+            // 시간 계획 데이터 추가 (UTF-8 처리)
             this.currentData.timeSchedule.forEach(item => {
                 basicInfoData.push([
-                    item.type || '',
-                    item.content || '',
-                    item.time || '',
-                    item.responsible || ''
+                    this.ensureUTF8Text(item.type || ''),
+                    this.ensureUTF8Text(item.content || ''),
+                    this.ensureUTF8Text(item.time || ''),
+                    this.ensureUTF8Text(item.responsible || '')
                 ]);
             });
             
             basicInfoData.push(['']);
-            basicInfoData.push(['세미나 참석 명단']);
-            basicInfoData.push(['No', '성명', '직급', '소속', '업무']);
+            basicInfoData.push([this.ensureUTF8Text('세미나 참석 명단')]);
+            basicInfoData.push([this.ensureUTF8Text('No'), this.ensureUTF8Text('성명'), this.ensureUTF8Text('직급'), this.ensureUTF8Text('소속'), this.ensureUTF8Text('업무')]);
             
-            // 참석자 데이터 추가
+            // 참석자 데이터 추가 (UTF-8 처리)
             this.currentData.attendeeList.forEach((item, index) => {
                 basicInfoData.push([
                     (index + 1).toString(),
-                    item.name || '',
-                    item.position || '',
-                    item.department || '',
-                    item.work || ''
+                    this.ensureUTF8Text(item.name || ''),
+                    this.ensureUTF8Text(item.position || ''),
+                    this.ensureUTF8Text(item.department || ''),
+                    this.ensureUTF8Text(item.work || '')
                 ]);
             });
             
@@ -1719,6 +1740,7 @@ class SeminarPlanningApp {
             // docx 라이브러리 확인 및 대체 방법 제공
             if (!window.docx) {
                 console.warn('⚠️ docx 라이브러리를 찾을 수 없습니다. 대체 방법을 시도합니다.');
+                this.showSuccessToast('Word 라이브러리 로딩 중... 대체 방법으로 내보내기를 진행합니다.');
                 
                 // 대체 방법: HTML을 Word 형식으로 내보내기
                 this.exportToWordAlternative();
@@ -1902,12 +1924,21 @@ class SeminarPlanningApp {
         try {
             console.log('🔄 대체 Word 내보내기 방법 사용');
             
+            // 데이터 유효성 검사
+            if (!this.currentData || (!this.currentData.session && !this.currentData.objective)) {
+                throw new Error('내보낼 데이터가 없습니다. 먼저 세미나 정보를 입력해주세요.');
+            }
+            
             // HTML 콘텐츠 생성
             const htmlContent = this.generateWordHTML();
             
-            // Blob 생성
+            if (!htmlContent || htmlContent.length < 100) {
+                throw new Error('Word 문서 생성에 실패했습니다.');
+            }
+            
+            // UTF-8 인코딩으로 Blob 생성
             const blob = new Blob([htmlContent], { 
-                type: 'application/msword' 
+                type: 'application/msword; charset=UTF-8' 
             });
             
             // 파일명 생성
@@ -1920,19 +1951,21 @@ class SeminarPlanningApp {
             // 파일 저장
             if (window.saveAs) {
                 window.saveAs(blob, fileName);
+                this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다. (대체 방법)');
             } else {
                 // FileSaver.js가 없는 경우 직접 다운로드
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = fileName;
+                a.style.display = 'none';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다. (대체 방법)');
             }
             
-            this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다. (대체 방법)');
         } catch (error) {
             console.error('대체 Word 내보내기 오류:', error);
             this.showErrorToast(`Word 내보내기 실패: ${error.message}`);
@@ -1941,7 +1974,7 @@ class SeminarPlanningApp {
         }
     }
 
-    // Word 형식의 HTML 콘텐츠 생성
+    // Word 형식의 HTML 콘텐츠 생성 (UTF-8 인코딩 보장)
     generateWordHTML() {
         const today = new Date();
         const dateString = today.toLocaleDateString('ko-KR');
@@ -1951,12 +1984,13 @@ class SeminarPlanningApp {
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="ProgId" content="Word.Document">
     <meta name="Generator" content="Microsoft Word 15">
     <meta name="Originator" content="Microsoft Word 15">
     <title>전사 신기술 세미나 실행계획</title>
     <style>
-        body { font-family: '맑은 고딕', Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        body { font-family: '맑은 고딕', 'Malgun Gothic', Arial, sans-serif; margin: 40px; line-height: 1.6; }
         h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
         h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
         table { width: 100%; border-collapse: collapse; margin: 20px 0; }
@@ -1972,23 +2006,23 @@ class SeminarPlanningApp {
     
     <h2>기본 정보</h2>
     <div class="info-item">
-        <span class="info-label">회차:</span> ${this.ensureKoreanText(this.currentData.session || '미입력')}
+        <span class="info-label">회차:</span> ${this.ensureUTF8Text(this.currentData.session || '미입력')}
     </div>
     <div class="info-item">
-        <span class="info-label">목표:</span> ${this.ensureKoreanText(this.currentData.objective || '미입력')}
+        <span class="info-label">목표:</span> ${this.ensureUTF8Text(this.currentData.objective || '미입력')}
     </div>
     <div class="info-item">
-        <span class="info-label">일시:</span> ${this.ensureKoreanText(this.currentData.datetime || '미입력')}
+        <span class="info-label">일시:</span> ${this.ensureUTF8Text(this.currentData.datetime || '미입력')}
     </div>
     <div class="info-item">
-        <span class="info-label">장소:</span> ${this.ensureKoreanText(this.currentData.location || '미입력')}
+        <span class="info-label">장소:</span> ${this.ensureUTF8Text(this.currentData.location || '미입력')}
     </div>
     <div class="info-item">
-        <span class="info-label">참석 대상:</span> ${this.ensureKoreanText(this.currentData.attendees || '미입력')}
+        <span class="info-label">참석 대상:</span> ${this.ensureUTF8Text(this.currentData.attendees || '미입력')}
     </div>
 `;
 
-        // 시간 계획 테이블
+        // 시간 계획 테이블 (UTF-8 처리)
         if (this.currentData.timeSchedule && this.currentData.timeSchedule.length > 0) {
             html += `
     <h2>시간 계획</h2>
@@ -2006,10 +2040,10 @@ class SeminarPlanningApp {
             this.currentData.timeSchedule.forEach(item => {
                 html += `
             <tr>
-                <td>${this.ensureKoreanText(item.type || '')}</td>
-                <td>${this.ensureKoreanText(item.content || '')}</td>
-                <td>${this.ensureKoreanText(item.time || '')}</td>
-                <td>${this.ensureKoreanText(item.responsible || '')}</td>
+                <td>${this.ensureUTF8Text(item.type || '')}</td>
+                <td>${this.ensureUTF8Text(item.content || '')}</td>
+                <td>${this.ensureUTF8Text(item.time || '')}</td>
+                <td>${this.ensureUTF8Text(item.responsible || '')}</td>
             </tr>
 `;
             });
@@ -2019,7 +2053,7 @@ class SeminarPlanningApp {
 `;
         }
 
-        // 참석자 명단 테이블
+        // 참석자 명단 테이블 (UTF-8 처리)
         if (this.currentData.attendeeList && this.currentData.attendeeList.length > 0) {
             html += `
     <h2>세미나 참석 명단</h2>
@@ -2039,10 +2073,10 @@ class SeminarPlanningApp {
                 html += `
             <tr>
                 <td>${index + 1}</td>
-                <td>${this.ensureKoreanText(item.name || '')}</td>
-                <td>${this.ensureKoreanText(item.position || '')}</td>
-                <td>${this.ensureKoreanText(item.department || '')}</td>
-                <td>${this.ensureKoreanText(item.work || '')}</td>
+                <td>${this.ensureUTF8Text(item.name || '')}</td>
+                <td>${this.ensureUTF8Text(item.position || '')}</td>
+                <td>${this.ensureUTF8Text(item.department || '')}</td>
+                <td>${this.ensureUTF8Text(item.work || '')}</td>
             </tr>
 `;
             });
