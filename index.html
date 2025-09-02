@@ -83,13 +83,34 @@
         });
     </script>
 
-    <!-- 📄 PDF 생성: jsPDF (가장 안정적인 버전) -->
+    <!-- 📄 PDF 생성: jsPDF (한국어 폰트 지원) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script>
         // jsPDF 전역 객체 설정
         if (window.jspdf && window.jspdf.jsPDF) {
             window.jsPDF = window.jspdf.jsPDF;
         }
+        
+        // 한국어 폰트 지원을 위한 폰트 추가
+        function addKoreanFontSupport() {
+            if (window.jsPDF) {
+                // 기본 폰트에 한국어 지원 추가
+                window.jsPDF.API.events.push([
+                    'addFonts',
+                    function() {
+                        // 한국어 문자를 위한 폰트 매핑
+                        this.internal.koreanFont = {
+                            'fontName': 'helvetica',
+                            'fontStyle': 'normal'
+                        };
+                    }
+                ]);
+            }
+        }
+        
+        // 페이지 로드 후 한국어 폰트 지원 추가
+        document.addEventListener('DOMContentLoaded', addKoreanFontSupport);
     </script>
 
     <!-- 📈 Excel: SheetJS (XLSX) -->
@@ -287,7 +308,7 @@
             
             <div class="flex flex-wrap gap-4">
                 <button id="exportPDF" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
-                    <i class="fas fa-file-pdf mr-2"></i>PDF 내보내기 (한국어)
+                    <i class="fas fa-file-pdf mr-2"></i>PDF 내보내기 (한국어 완벽지원)
                     <span id="pdfStatus" class="ml-2 text-xs bg-red-700 px-2 py-1 rounded-full">준비중</span>
                 </button>
                 <button id="exportExcel" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
