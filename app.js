@@ -1368,31 +1368,64 @@ class SeminarPlanningApp {
         try {
             this.showLoading(true);
             
-            // PDFMake 라이브러리 확인
-            if (window.pdfMake) {
+            // PDFMake 라이브러리 로딩 대기 및 확인
+            this.waitForPDFMake().then(() => {
                 console.log('✅ PDFMake 라이브러리 사용');
                 this.exportToPDFWithPDFMake();
-            } else {
-                console.log('🔄 PDFMake 없음, HTML to PDF 방식 사용');
+            }).catch(() => {
+                console.log('🔄 PDFMake 로딩 실패, HTML to PDF 방식 사용');
                 this.exportToPDFWithHTML();
-            }
+            });
             
         } catch (error) {
             console.error('PDF 내보내기 오류:', error);
             this.showErrorToast(`PDF 내보내기 실패: ${error.message}`);
-        } finally {
             this.showLoading(false);
         }
+    }
+
+    // PDFMake 라이브러리 로딩 대기
+    waitForPDFMake() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 100; // 10초 대기 (100ms * 100)
+            
+            const checkPDFMake = () => {
+                attempts++;
+                
+                if (window.pdfMake && window.pdfMake.fonts) {
+                    console.log('✅ PDFMake 라이브러리 로딩 확인 완료');
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    console.warn('⚠️ PDFMake 로딩 시간 초과 (10초)');
+                    reject(new Error('PDFMake 로딩 시간 초과'));
+                } else {
+                    setTimeout(checkPDFMake, 100);
+                }
+            };
+            
+            checkPDFMake();
+        });
     }
 
     // PDFMake를 사용한 PDF 생성 (한국어 완벽 지원)
     exportToPDFWithPDFMake() {
         try {
-            // PDFMake 폰트 확인
-            if (!window.pdfMake || !window.pdfMake.fonts) {
-                throw new Error('PDFMake 라이브러리가 제대로 로드되지 않았습니다.');
+            // PDFMake 라이브러리 로딩 확인
+            if (!window.pdfMake) {
+                console.warn('⚠️ PDFMake 라이브러리가 로드되지 않았습니다. HTML to PDF 방식으로 전환합니다.');
+                this.exportToPDFWithHTML();
+                return;
             }
             
+            // PDFMake 폰트 확인
+            if (!window.pdfMake.fonts) {
+                console.warn('⚠️ PDFMake 폰트가 로드되지 않았습니다. HTML to PDF 방식으로 전환합니다.');
+                this.exportToPDFWithHTML();
+                return;
+            }
+            
+            console.log('✅ PDFMake 라이브러리 로드 완료');
             console.log('📋 사용 가능한 폰트:', Object.keys(window.pdfMake.fonts));
             
             // 안전한 텍스트 처리 함수

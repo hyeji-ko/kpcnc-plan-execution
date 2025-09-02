@@ -27,7 +27,7 @@
             console.log('🔍 내보내기 라이브러리 상태 확인 중...');
             
             // PDFMake 확인 (우선순위)
-            if (window.pdfMake) {
+            if (window.pdfMake && window.pdfMake.fonts) {
                 window.exportLibraries.pdfMake = true;
                 console.log('✅ PDFMake 로드 완료');
                 updateLibraryStatus('pdfMakeStatus', true);
@@ -89,8 +89,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
     <!-- PDFMake 라이브러리 (한국어 완벽 지원) -->
-    <script src="pdfmake.min.js"></script>
     <script src="vfs_fonts.js"></script>
+    <script src="pdfmake.min.js"></script>
+    <script>
+        // PDFMake 라이브러리 로딩 확인
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (window.pdfMake && window.pdfMake.fonts) {
+                    console.log('✅ PDFMake 라이브러리 로딩 완료');
+                    console.log('📋 사용 가능한 폰트:', Object.keys(window.pdfMake.fonts));
+                } else {
+                    console.warn('⚠️ PDFMake 라이브러리 로딩 실패');
+                }
+            }, 1000);
+        });
+    </script>
     <script>
         // jsPDF 전역 객체 설정
         if (window.jspdf && window.jspdf.jsPDF) {
