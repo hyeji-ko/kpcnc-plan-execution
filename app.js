@@ -1409,7 +1409,7 @@ class SeminarPlanningApp {
                     {
                         text: '기본 정보',
                         style: 'sectionHeader',
-                        margin: [0, 0, 0, 10]
+                        margin: [0, 0,0, 10]
                     },
                     {
                         table: {
@@ -1421,8 +1421,7 @@ class SeminarPlanningApp {
                                 ],
                                 [
                                     { text: '일시/장소', style: 'tableHeader' },
-                                    { text: this.currentData.datetime || '미입력' 
-                                    + ' / ' + this.currentData.location || '미입력', style: 'tableCell' }
+                                    { text: this.currentData.datetime || '미입력' + ' / ' + this.currentData.location || '미입력', style: 'tableCell' }
                                 ],
                                 [
                                     { text: '참석 대상', style: 'tableHeader' },
@@ -1611,7 +1610,6 @@ class SeminarPlanningApp {
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>전사 신기술 세미나 실행계획</title>
     <style>
         @page {
             size: A4;
@@ -1699,13 +1697,13 @@ class SeminarPlanningApp {
     <div class="section">
         <h2>기본 정보</h2>
         <div class="info-item">
-            <span class="info-label">1.목표:</span> ${safeText(this.currentData.objective)}
+            <span class="info-label">1. 목표:</span> ${safeText(this.currentData.objective)}
         </div>
         <div class="info-item">
-            <span class="info-label">2.일시/장소소:</span> ${safeText(this.currentData.datetime)} / ${safeText(this.currentData.location)}
+            <span class="info-label">2. 일시/장소:</span> ${safeText(this.currentData.datetime)} / ${safeText(this.currentData.location)}
         </div>
         <div class="info-item">
-            <span class="info-label">3.참석 대상:</span> ${safeText(this.currentData.attendees)}
+            <span class="info-label">3. 참석 대상:</span> ${safeText(this.currentData.attendees)}
         </div>
     </div>
 `;
@@ -1714,7 +1712,7 @@ class SeminarPlanningApp {
         if (this.currentData.timeSchedule && this.currentData.timeSchedule.length > 0) {
             html += `
     <div class="section">
-        <h2>4.시간 계획</h2>
+        <h2>4. 시간 계획</h2>
         <table>
             <thead>
                 <tr>
