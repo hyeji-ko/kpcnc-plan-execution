@@ -1471,24 +1471,19 @@ class SeminarPlanningApp {
                     
                     // 기본 정보
                     {
-                        text: '기본 정보',
-                        style: 'sectionHeader',
-                        margin: [0, 0,0, 10]
-                    },
-                    {
                         table: {
                             widths: ['*', '*'],
                             body: [
                                 [
-                                    { text: '1. 목표', style: 'tableHeader' },
+                                    { text: '1. 목표', style: 'sectionHeader' },
                                     { text: safeText(this.currentData.objective) || '미입력', style: 'tableCell' }
                                 ],
                                 [
-                                    { text: '2. 일시/장소', style: 'tableHeader' },
+                                    { text: '2. 일시/장소', style: 'sectionHeader' },
                                     { text: (formatDateTime(safeText(this.currentData.datetime)) || '미입력') + ' / ' + (safeText(this.currentData.location) || '미입력'), style: 'tableCell' }
                                 ],
                                 [
-                                    { text: '3. 참석 대상', style: 'tableHeader' },
+                                    { text: '3. 참석 대상', style: 'sectionHeader' },
                                     { text: safeText(this.currentData.attendees) || '미입력', style: 'tableCell' }
                                 ]
                             ]
@@ -1737,7 +1732,7 @@ class SeminarPlanningApp {
             // 나머지 부분들을 4칸 들여쓰기와 함께 추가
             for (let i = 1; i < parts.length; i++) {
                 if (parts[i].trim()) {
-                    result += '<br>&nbsp;&nbsp;&nbsp;&nbsp;' + parts[i]; // 4칸 들여쓰기
+                    result += '<br>&nbsp;&nbsp;&nbsp;&nbsp;□ ' + parts[i]; // 4칸 들여쓰기
                 }
             }
             
@@ -1759,7 +1754,7 @@ class SeminarPlanningApp {
             size: A4;
             margin: 2cm;
             @top-center {
-                content: "${fileName}";
+                content: " ";
             }
         }
         * {
@@ -1871,16 +1866,9 @@ class SeminarPlanningApp {
     </div>
     
     <div class="section">
-        <h2>기본 정보</h2>
-        <div class="info-item">
-            <h2><span class="info-label">1. 목표</span></h2>${formatObjectiveHTML(safeText(this.currentData.objective))}
-        </div>
-        <div class="info-item">
-            <h2><span class="info-label">2. 일시/장소</span></h2><br>    □ ${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}
-        </div>
-        <div class="info-item">
-            <h2><span class="info-label">3. 참석 대상</span></h2><br>    □ ${safeText(this.currentData.attendees)}
-        </div>
+        <h2><span class="info-label">1. 목표</span></h2>${formatObjectiveHTML(safeText(this.currentData.objective))}
+        <h2><span class="info-label">2. 일시/장소</span></h2><br>&nbsp;&nbsp;&nbsp;&nbsp;□ ${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}
+        <h2><span class="info-label">3. 참석 대상</span></h2><br>&nbsp;&nbsp;&nbsp;&nbsp;□ ${safeText(this.currentData.attendees)}
     </div>
 `;
 
