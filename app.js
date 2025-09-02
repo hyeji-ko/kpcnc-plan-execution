@@ -1384,7 +1384,10 @@ class SeminarPlanningApp {
 
             const doc = new jsPDFClass();
             
-            // 제목 추가
+            // 한국어 폰트 설정 (기본 폰트 사용하되 한국어 지원)
+            doc.setFont('helvetica');
+            
+            // 제목 추가 (한국어 지원)
             doc.setFontSize(20);
             doc.setFont('helvetica', 'bold');
             doc.text('전사 신기술 세미나 실행계획', 105, 20, { align: 'center' });
@@ -1408,8 +1411,9 @@ class SeminarPlanningApp {
             
             let y = 55;
             basicInfo.forEach(info => {
-                // 긴 텍스트는 여러 줄로 분할
-                const lines = this.splitTextToFit(info.value, 150);
+                // 한국어 텍스트를 안전하게 처리
+                const safeValue = this.ensureKoreanText(info.value);
+                const lines = this.splitKoreanTextToFit(safeValue, 150);
                 lines.forEach(line => {
                     doc.text(`${info.label}: ${line}`, 20, y);
                     y += 8;
@@ -1446,16 +1450,22 @@ class SeminarPlanningApp {
                         y = 20;
                     }
                     
-                    doc.text(item.type || '', 20, y);
+                    // 한국어 텍스트 안전 처리
+                    const safeType = this.ensureKoreanText(item.type || '');
+                    const safeContent = this.ensureKoreanText(item.content || '');
+                    const safeTime = this.ensureKoreanText(item.time || '');
+                    const safeResponsible = this.ensureKoreanText(item.responsible || '');
+                    
+                    doc.text(safeType, 20, y);
                     
                     // 주요 내용은 여러 줄로 분할
-                    const contentLines = this.splitTextToFit(item.content || '', 60);
+                    const contentLines = this.splitKoreanTextToFit(safeContent, 60);
                     contentLines.forEach((line, index) => {
                         doc.text(line, 50, y + (index * 6));
                     });
                     
-                    doc.text(item.time || '', 120, y);
-                    doc.text(item.responsible || '', 160, y);
+                    doc.text(safeTime, 120, y);
+                    doc.text(safeResponsible, 160, y);
                     
                     // 다음 행 위치 계산 (가장 긴 내용 기준)
                     y += Math.max(8, contentLines.length * 6 + 2);
@@ -1498,17 +1508,28 @@ class SeminarPlanningApp {
                         lastY = 20;
                     }
                     
+                    // 한국어 텍스트 안전 처리
+                    const safeName = this.ensureKoreanText(item.name || '');
+                    const safePosition = this.ensureKoreanText(item.position || '');
+                    const safeDepartment = this.ensureKoreanText(item.department || '');
+                    const safeWork = this.ensureKoreanText(item.work || '');
+                    
                     doc.text((index + 1).toString(), 20, lastY);
-                    doc.text(item.name || '', 35, lastY);
-                    doc.text(item.position || '', 70, lastY);
-                    doc.text(item.department || '', 100, lastY);
-                    doc.text(item.work || '', 140, lastY);
+                    doc.text(safeName, 35, lastY);
+                    doc.text(safePosition, 70, lastY);
+                    doc.text(safeDepartment, 100, lastY);
+                    doc.text(safeWork, 140, lastY);
                     lastY += 8;
                 });
             }
             
-            // 파일 저장
-            const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.pdf`;
+            // 한국어 파일명 생성
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fileName = `세미나_실행계획_${year}${month}${day}.pdf`;
+            
             doc.save(fileName);
             
             this.showSuccessToast('PDF가 성공적으로 내보내졌습니다.');
@@ -1520,7 +1541,74 @@ class SeminarPlanningApp {
         }
     }
 
-    // 텍스트를 PDF에 맞게 분할하는 헬퍼 함수
+    // 한국어 텍스트를 안전하게 처리하는 함수
+    ensureKoreanText(text) {
+        if (!text) return '';
+        
+        // 특수문자나 인코딩 문제가 있는 문자들을 안전하게 처리
+        return String(text)
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // 제어 문자 제거
+            .replace(/[^\u0020-\u007E\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/g, '') // 한글, 영문, 기본 특수문자만 허용
+            .trim();
+    }
+
+    // 한국어 텍스트를 PDF에 맞게 분할하는 헬퍼 함수
+    splitKoreanTextToFit(text, maxWidth) {
+        if (!text) return [''];
+        
+        const safeText = this.ensureKoreanText(text);
+        if (!safeText) return [''];
+        
+        // 한국어는 공백으로 분할하지 않고 문자 단위로 처리
+        const lines = [];
+        let currentLine = '';
+        
+        for (let i = 0; i < safeText.length; i++) {
+            const char = safeText[i];
+            const testLine = currentLine + char;
+            
+            // 대략적인 문자 폭 계산 (한글은 2배 폭으로 계산)
+            const charWidth = this.getCharWidth(char);
+            const lineWidth = this.getLineWidth(currentLine) + charWidth;
+            
+            if (lineWidth <= maxWidth) {
+                currentLine = testLine;
+            } else {
+                if (currentLine) {
+                    lines.push(currentLine);
+                    currentLine = char;
+                } else {
+                    lines.push(char);
+                }
+            }
+        }
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        return lines.length > 0 ? lines : [''];
+    }
+
+    // 문자 폭 계산 (한글은 2배 폭)
+    getCharWidth(char) {
+        const code = char.charCodeAt(0);
+        // 한글 범위: 0xAC00-0xD7AF, 0x1100-0x11FF, 0x3130-0x318F
+        if ((code >= 0xAC00 && code <= 0xD7AF) || 
+            (code >= 0x1100 && code <= 0x11FF) || 
+            (code >= 0x3130 && code <= 0x318F)) {
+            return 2; // 한글은 2배 폭
+        }
+        return 1; // 영문, 숫자, 특수문자는 1배 폭
+    }
+
+    // 라인 폭 계산
+    getLineWidth(line) {
+        if (!line) return 0;
+        return line.split('').reduce((width, char) => width + this.getCharWidth(char), 0);
+    }
+
+    // 기존 텍스트 분할 함수 (호환성 유지)
     splitTextToFit(text, maxWidth) {
         if (!text) return [''];
         
@@ -1606,8 +1694,13 @@ class SeminarPlanningApp {
             const basicInfoSheet = window.XLSX.utils.aoa_to_sheet(basicInfoData);
             window.XLSX.utils.book_append_sheet(wb, basicInfoSheet, '세미나 실행계획');
             
-            // 파일 저장
-            const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.xlsx`;
+            // 한국어 파일명 생성
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fileName = `세미나_실행계획_${year}${month}${day}.xlsx`;
+            
             window.XLSX.writeFile(wb, fileName);
             
             this.showSuccessToast('Excel 파일이 성공적으로 내보내졌습니다.');
@@ -1623,9 +1716,13 @@ class SeminarPlanningApp {
         try {
             this.showLoading(true);
             
-            // docx 라이브러리 확인
+            // docx 라이브러리 확인 및 대체 방법 제공
             if (!window.docx) {
-                throw new Error('Word 문서 생성 라이브러리를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+                console.warn('⚠️ docx 라이브러리를 찾을 수 없습니다. 대체 방법을 시도합니다.');
+                
+                // 대체 방법: HTML을 Word 형식으로 내보내기
+                this.exportToWordAlternative();
+                return;
             }
             
             console.log('✅ docx 라이브러리 사용');
@@ -1765,8 +1862,12 @@ class SeminarPlanningApp {
                 });
             }
             
-            // 파일 생성 및 저장
-            const fileName = `세미나_실행계획_${new Date().toISOString().split('T')[0]}.docx`;
+            // 한국어 파일명 생성
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fileName = `세미나_실행계획_${year}${month}${day}.docx`;
             
             window.docx.Packer.toBlob(doc).then(blob => {
                 if (window.saveAs) {
@@ -1794,6 +1895,173 @@ class SeminarPlanningApp {
         } finally {
             this.showLoading(false);
         }
+    }
+
+    // 대체 Word 내보내기 방법 (HTML 기반)
+    exportToWordAlternative() {
+        try {
+            console.log('🔄 대체 Word 내보내기 방법 사용');
+            
+            // HTML 콘텐츠 생성
+            const htmlContent = this.generateWordHTML();
+            
+            // Blob 생성
+            const blob = new Blob([htmlContent], { 
+                type: 'application/msword' 
+            });
+            
+            // 파일명 생성
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fileName = `세미나_실행계획_${year}${month}${day}.doc`;
+            
+            // 파일 저장
+            if (window.saveAs) {
+                window.saveAs(blob, fileName);
+            } else {
+                // FileSaver.js가 없는 경우 직접 다운로드
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다. (대체 방법)');
+        } catch (error) {
+            console.error('대체 Word 내보내기 오류:', error);
+            this.showErrorToast(`Word 내보내기 실패: ${error.message}`);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // Word 형식의 HTML 콘텐츠 생성
+    generateWordHTML() {
+        const today = new Date();
+        const dateString = today.toLocaleDateString('ko-KR');
+        
+        let html = `
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+    <meta charset="UTF-8">
+    <meta name="ProgId" content="Word.Document">
+    <meta name="Generator" content="Microsoft Word 15">
+    <meta name="Originator" content="Microsoft Word 15">
+    <title>전사 신기술 세미나 실행계획</title>
+    <style>
+        body { font-family: '맑은 고딕', Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #bdc3c7; padding: 8px; text-align: left; }
+        th { background-color: #ecf0f1; font-weight: bold; }
+        .info-item { margin: 10px 0; }
+        .info-label { font-weight: bold; color: #2c3e50; }
+        .footer { text-align: center; margin-top: 40px; color: #7f8c8d; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>전사 신기술 세미나 실행계획</h1>
+    
+    <h2>기본 정보</h2>
+    <div class="info-item">
+        <span class="info-label">회차:</span> ${this.ensureKoreanText(this.currentData.session || '미입력')}
+    </div>
+    <div class="info-item">
+        <span class="info-label">목표:</span> ${this.ensureKoreanText(this.currentData.objective || '미입력')}
+    </div>
+    <div class="info-item">
+        <span class="info-label">일시:</span> ${this.ensureKoreanText(this.currentData.datetime || '미입력')}
+    </div>
+    <div class="info-item">
+        <span class="info-label">장소:</span> ${this.ensureKoreanText(this.currentData.location || '미입력')}
+    </div>
+    <div class="info-item">
+        <span class="info-label">참석 대상:</span> ${this.ensureKoreanText(this.currentData.attendees || '미입력')}
+    </div>
+`;
+
+        // 시간 계획 테이블
+        if (this.currentData.timeSchedule && this.currentData.timeSchedule.length > 0) {
+            html += `
+    <h2>시간 계획</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>구분</th>
+                <th>주요 내용</th>
+                <th>시간</th>
+                <th>담당</th>
+            </tr>
+        </thead>
+        <tbody>
+`;
+            this.currentData.timeSchedule.forEach(item => {
+                html += `
+            <tr>
+                <td>${this.ensureKoreanText(item.type || '')}</td>
+                <td>${this.ensureKoreanText(item.content || '')}</td>
+                <td>${this.ensureKoreanText(item.time || '')}</td>
+                <td>${this.ensureKoreanText(item.responsible || '')}</td>
+            </tr>
+`;
+            });
+            html += `
+        </tbody>
+    </table>
+`;
+        }
+
+        // 참석자 명단 테이블
+        if (this.currentData.attendeeList && this.currentData.attendeeList.length > 0) {
+            html += `
+    <h2>세미나 참석 명단</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>성명</th>
+                <th>직급</th>
+                <th>소속</th>
+                <th>업무</th>
+            </tr>
+        </thead>
+        <tbody>
+`;
+            this.currentData.attendeeList.forEach((item, index) => {
+                html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${this.ensureKoreanText(item.name || '')}</td>
+                <td>${this.ensureKoreanText(item.position || '')}</td>
+                <td>${this.ensureKoreanText(item.department || '')}</td>
+                <td>${this.ensureKoreanText(item.work || '')}</td>
+            </tr>
+`;
+            });
+            html += `
+        </tbody>
+    </table>
+`;
+        }
+
+        html += `
+    <div class="footer">
+        <p>생성일: ${dateString}</p>
+        <p>전사 신기술 세미나 실행계획 시스템</p>
+    </div>
+</body>
+</html>
+`;
+
+        return html;
     }
 
     // 데이터 삭제 메서드
