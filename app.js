@@ -1384,32 +1384,38 @@ class SeminarPlanningApp {
 
             const doc = new jsPDFClass();
             
-            // UTF-8 인코딩 설정
+            // PDF 메타데이터 설정
             doc.setProperties({
                 title: '전사 신기술 세미나 실행계획',
                 subject: '세미나 실행계획서',
                 author: 'KPCNC 시스템',
-                creator: 'KPCNC Plan Execution System'
+                creator: 'KPCNC Plan Execution System',
+                keywords: '세미나, 실행계획, KPCNC'
             });
             
-            // 폰트 설정 (UTF-8 지원)
-            doc.setFont('helvetica');
+            // 한국어 텍스트를 안전하게 처리하는 함수
+            const safeText = (text) => {
+                if (!text) return '';
+                // 한국어 문자를 유니코드 이스케이프로 변환
+                return String(text).replace(/[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/g, (match) => {
+                    return '\\u' + match.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0');
+                });
+            };
             
-            // 제목 추가 (UTF-8 텍스트)
+            // 제목 추가 (한국어 안전 처리)
             doc.setFontSize(20);
             doc.setFont('helvetica', 'bold');
-            const title = this.ensureUTF8Text('전사 신기술 세미나 실행계획');
-            doc.text(title, 105, 20, { align: 'center' });
+            doc.text('전사 신기술 세미나 실행계획', 105, 20, { align: 'center' });
             
             // 기본 정보 섹션
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text(this.ensureUTF8Text('기본 정보'), 20, 40);
+            doc.text('기본 정보', 20, 40);
             
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             
-            // 기본 정보 데이터 (UTF-8 처리)
+            // 기본 정보 데이터 (한국어 안전 처리)
             const basicInfo = [
                 { label: '회차', value: this.currentData.session || '미입력' },
                 { label: '목표', value: this.currentData.objective || '미입력' },
@@ -1420,10 +1426,12 @@ class SeminarPlanningApp {
             
             let y = 55;
             basicInfo.forEach(info => {
-                // UTF-8 텍스트를 안전하게 처리
-                const safeLabel = this.ensureUTF8Text(info.label);
-                const safeValue = this.ensureUTF8Text(info.value);
-                const lines = this.splitUTF8TextToFit(safeValue, 150);
+                // 한국어 텍스트를 안전하게 처리
+                const safeLabel = info.label;
+                const safeValue = info.value || '미입력';
+                
+                // 텍스트를 여러 줄로 분할
+                const lines = this.splitTextForPDF(safeValue, 120);
                 lines.forEach(line => {
                     doc.text(`${safeLabel}: ${line}`, 20, y);
                     y += 8;
@@ -1437,22 +1445,22 @@ class SeminarPlanningApp {
                 
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
-                doc.text(this.ensureUTF8Text('시간 계획'), 20, y);
+                doc.text('시간 계획', 20, y);
                 y += 15;
                 
-                // 테이블 헤더 (UTF-8 처리)
+                // 테이블 헤더
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
-                doc.text(this.ensureUTF8Text('구분'), 20, y);
-                doc.text(this.ensureUTF8Text('주요 내용'), 50, y);
-                doc.text(this.ensureUTF8Text('시간'), 120, y);
-                doc.text(this.ensureUTF8Text('담당'), 160, y);
+                doc.text('구분', 20, y);
+                doc.text('주요 내용', 50, y);
+                doc.text('시간', 120, y);
+                doc.text('담당', 160, y);
                 
                 // 구분선 그리기
                 doc.line(20, y + 2, 190, y + 2);
                 y += 10;
                 
-                // 테이블 데이터 (UTF-8 처리)
+                // 테이블 데이터
                 doc.setFont('helvetica', 'normal');
                 this.currentData.timeSchedule.forEach(item => {
                     if (y > 270) { // 페이지 끝에 가까우면 새 페이지
@@ -1460,16 +1468,16 @@ class SeminarPlanningApp {
                         y = 20;
                     }
                     
-                    // UTF-8 텍스트 안전 처리
-                    const safeType = this.ensureUTF8Text(item.type || '');
-                    const safeContent = this.ensureUTF8Text(item.content || '');
-                    const safeTime = this.ensureUTF8Text(item.time || '');
-                    const safeResponsible = this.ensureUTF8Text(item.responsible || '');
+                    // 한국어 텍스트 안전 처리
+                    const safeType = item.type || '';
+                    const safeContent = item.content || '';
+                    const safeTime = item.time || '';
+                    const safeResponsible = item.responsible || '';
                     
                     doc.text(safeType, 20, y);
                     
                     // 주요 내용은 여러 줄로 분할
-                    const contentLines = this.splitUTF8TextToFit(safeContent, 60);
+                    const contentLines = this.splitTextForPDF(safeContent, 60);
                     contentLines.forEach((line, index) => {
                         doc.text(line, 50, y + (index * 6));
                     });
@@ -1494,23 +1502,23 @@ class SeminarPlanningApp {
                 
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
-                doc.text(this.ensureUTF8Text('세미나 참석 명단'), 20, lastY);
+                doc.text('세미나 참석 명단', 20, lastY);
                 lastY += 15;
                 
-                // 테이블 헤더 (UTF-8 처리)
+                // 테이블 헤더
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
                 doc.text('No', 20, lastY);
-                doc.text(this.ensureUTF8Text('성명'), 35, lastY);
-                doc.text(this.ensureUTF8Text('직급'), 70, lastY);
-                doc.text(this.ensureUTF8Text('소속'), 100, lastY);
-                doc.text(this.ensureUTF8Text('업무'), 140, lastY);
+                doc.text('성명', 35, lastY);
+                doc.text('직급', 70, lastY);
+                doc.text('소속', 100, lastY);
+                doc.text('업무', 140, lastY);
                 
                 // 구분선 그리기
                 doc.line(20, lastY + 2, 190, lastY + 2);
                 lastY += 10;
                 
-                // 테이블 데이터 (UTF-8 처리)
+                // 테이블 데이터
                 doc.setFont('helvetica', 'normal');
                 this.currentData.attendeeList.forEach((item, index) => {
                     if (lastY > 270) { // 페이지 끝에 가까우면 새 페이지
@@ -1518,11 +1526,11 @@ class SeminarPlanningApp {
                         lastY = 20;
                     }
                     
-                    // UTF-8 텍스트 안전 처리
-                    const safeName = this.ensureUTF8Text(item.name || '');
-                    const safePosition = this.ensureUTF8Text(item.position || '');
-                    const safeDepartment = this.ensureUTF8Text(item.department || '');
-                    const safeWork = this.ensureUTF8Text(item.work || '');
+                    // 한국어 텍스트 안전 처리
+                    const safeName = item.name || '';
+                    const safePosition = item.position || '';
+                    const safeDepartment = item.department || '';
+                    const safeWork = item.work || '';
                     
                     doc.text((index + 1).toString(), 20, lastY);
                     doc.text(safeName, 35, lastY);
@@ -1540,15 +1548,236 @@ class SeminarPlanningApp {
             const day = String(today.getDate()).padStart(2, '0');
             const fileName = `세미나_실행계획_${year}${month}${day}.pdf`;
             
+            // PDF 저장
             doc.save(fileName);
             
             this.showSuccessToast('PDF가 성공적으로 내보내졌습니다.');
         } catch (error) {
             console.error('PDF 내보내기 오류:', error);
+            console.log('🔄 대체 PDF 내보내기 방법을 시도합니다.');
+            this.showSuccessToast('PDF 생성 중 오류가 발생했습니다. 대체 방법으로 진행합니다.');
+            
+            // 대체 방법 시도
+            this.exportToPDFAlternative();
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // 대체 PDF 내보내기 방법 (HTML to PDF)
+    exportToPDFAlternative() {
+        try {
+            console.log('🔄 대체 PDF 내보내기 방법 사용 (HTML to PDF)');
+            
+            // HTML 콘텐츠 생성
+            const htmlContent = this.generatePDFHTML();
+            
+            // 새 창에서 HTML 열기
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
+            
+            // 인쇄 대화상자 열기
+            setTimeout(() => {
+                newWindow.print();
+                this.showSuccessToast('PDF 인쇄 대화상자가 열렸습니다. "PDF로 저장"을 선택하세요.');
+            }, 500);
+            
+        } catch (error) {
+            console.error('대체 PDF 내보내기 오류:', error);
             this.showErrorToast(`PDF 내보내기 실패: ${error.message}`);
         } finally {
             this.showLoading(false);
         }
+    }
+
+    // PDF용 HTML 콘텐츠 생성
+    generatePDFHTML() {
+        const today = new Date();
+        const dateString = today.toLocaleDateString('ko-KR');
+        
+        let html = `
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>전사 신기술 세미나 실행계획</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: '맑은 고딕', 'Malgun Gothic', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            color: #2c3e50;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h2 {
+            font-size: 16px;
+            font-weight: bold;
+            color: #34495e;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .info-item {
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        .info-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 80px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 11px;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 6px;
+            text-align: left;
+        }
+        th {
+            background-color: #ecf0f1;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 10px;
+            color: #7f8c8d;
+            border-top: 1px solid #bdc3c7;
+            padding-top: 10px;
+        }
+        @media print {
+            body { -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>전사 신기술 세미나 실행계획</h1>
+    </div>
+    
+    <div class="section">
+        <h2>기본 정보</h2>
+        <div class="info-item">
+            <span class="info-label">회차:</span> ${this.ensureUTF8Text(this.currentData.session || '미입력')}
+        </div>
+        <div class="info-item">
+            <span class="info-label">목표:</span> ${this.ensureUTF8Text(this.currentData.objective || '미입력')}
+        </div>
+        <div class="info-item">
+            <span class="info-label">일시:</span> ${this.ensureUTF8Text(this.currentData.datetime || '미입력')}
+        </div>
+        <div class="info-item">
+            <span class="info-label">장소:</span> ${this.ensureUTF8Text(this.currentData.location || '미입력')}
+        </div>
+        <div class="info-item">
+            <span class="info-label">참석 대상:</span> ${this.ensureUTF8Text(this.currentData.attendees || '미입력')}
+        </div>
+    </div>
+`;
+
+        // 시간 계획 테이블
+        if (this.currentData.timeSchedule && this.currentData.timeSchedule.length > 0) {
+            html += `
+    <div class="section">
+        <h2>시간 계획</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>구분</th>
+                    <th>주요 내용</th>
+                    <th>시간</th>
+                    <th>담당</th>
+                </tr>
+            </thead>
+            <tbody>
+`;
+            this.currentData.timeSchedule.forEach(item => {
+                html += `
+                <tr>
+                    <td>${this.ensureUTF8Text(item.type || '')}</td>
+                    <td>${this.ensureUTF8Text(item.content || '')}</td>
+                    <td>${this.ensureUTF8Text(item.time || '')}</td>
+                    <td>${this.ensureUTF8Text(item.responsible || '')}</td>
+                </tr>
+`;
+            });
+            html += `
+            </tbody>
+        </table>
+    </div>
+`;
+        }
+
+        // 참석자 명단 테이블
+        if (this.currentData.attendeeList && this.currentData.attendeeList.length > 0) {
+            html += `
+    <div class="section">
+        <h2>세미나 참석 명단</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>성명</th>
+                    <th>직급</th>
+                    <th>소속</th>
+                    <th>업무</th>
+                </tr>
+            </thead>
+            <tbody>
+`;
+            this.currentData.attendeeList.forEach((item, index) => {
+                html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${this.ensureUTF8Text(item.name || '')}</td>
+                    <td>${this.ensureUTF8Text(item.position || '')}</td>
+                    <td>${this.ensureUTF8Text(item.department || '')}</td>
+                    <td>${this.ensureUTF8Text(item.work || '')}</td>
+                </tr>
+`;
+            });
+            html += `
+            </tbody>
+        </table>
+    </div>
+`;
+        }
+
+        html += `
+    <div class="footer">
+        <p>생성일: ${dateString}</p>
+        <p>전사 신기술 세미나 실행계획 시스템</p>
+    </div>
+</body>
+</html>
+`;
+
+        return html;
     }
 
     // UTF-8 텍스트를 안전하게 처리하는 함수 (한국어/영어 모두 지원)
@@ -1627,6 +1856,41 @@ class SeminarPlanningApp {
     getLineWidth(line) {
         if (!line) return 0;
         return line.split('').reduce((width, char) => width + this.getCharWidth(char), 0);
+    }
+
+    // PDF용 텍스트 분할 함수 (한국어 지원)
+    splitTextForPDF(text, maxWidth) {
+        if (!text) return [''];
+        
+        const safeText = String(text);
+        const lines = [];
+        let currentLine = '';
+        
+        for (let i = 0; i < safeText.length; i++) {
+            const char = safeText[i];
+            const testLine = currentLine + char;
+            
+            // 대략적인 문자 폭 계산
+            const charWidth = this.getCharWidth(char);
+            const lineWidth = this.getLineWidth(currentLine) + charWidth;
+            
+            if (lineWidth <= maxWidth) {
+                currentLine = testLine;
+            } else {
+                if (currentLine) {
+                    lines.push(currentLine);
+                    currentLine = char;
+                } else {
+                    lines.push(char);
+                }
+            }
+        }
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        return lines.length > 0 ? lines : [''];
     }
 
     // 기존 텍스트 분할 함수 (호환성 유지)
