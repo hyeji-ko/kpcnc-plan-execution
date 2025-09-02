@@ -56,13 +56,7 @@
                 updateLibraryStatus('saveAsStatus', true);
             }
             
-            // docx 확인
-            if (window.docx) {
-                window.exportLibraries.docx = true;
-                console.log('✅ docx 로드 완료');
-                updateLibraryStatus('docxStatus', true);
-                updateExportButtonStatus('wordStatus', '준비완료', 'bg-green-700');
-            }
+
             
             console.log('📊 최종 라이브러리 상태:', window.exportLibraries);
         }
@@ -130,45 +124,7 @@
     <!-- 💾 파일 저장: FileSaver.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-    <!-- 📝 Word 문서: docx (안정적인 로딩) -->
-    <script>
-        // docx 라이브러리 로딩 관리
-        let docxLoadAttempts = 0;
-        const maxDocxAttempts = 3;
-        const docxCDNs = [
-            'https://unpkg.com/docx@8.2.3/build/index.js',
-            'https://cdn.jsdelivr.net/npm/docx@8.2.3/build/index.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/docx/8.2.3/index.js'
-        ];
 
-        function loadDocxLibrary() {
-            if (docxLoadAttempts >= maxDocxAttempts) {
-                console.warn('⚠️ docx 라이브러리 모든 CDN 로딩 실패, 대체 방법 사용');
-                updateLibraryStatus('docxStatus', false);
-                updateExportButtonStatus('wordStatus', '대체방법 사용', 'bg-yellow-600');
-                return;
-            }
-
-            const script = document.createElement('script');
-            script.src = docxCDNs[docxLoadAttempts];
-            script.onload = function() {
-                console.log(`✅ docx 라이브러리 로드 완료 (CDN ${docxLoadAttempts + 1})`);
-                updateLibraryStatus('docxStatus', true);
-                updateExportButtonStatus('wordStatus', '준비완료', 'bg-green-700');
-            };
-            script.onerror = function() {
-                console.warn(`⚠️ docx 라이브러리 CDN ${docxLoadAttempts + 1} 로딩 실패`);
-                docxLoadAttempts++;
-                setTimeout(loadDocxLibrary, 1000); // 1초 후 다음 CDN 시도
-            };
-            document.head.appendChild(script);
-        }
-
-        // 페이지 로드 후 docx 라이브러리 로딩 시작
-        window.addEventListener('load', function() {
-            setTimeout(loadDocxLibrary, 1000);
-        });
-    </script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Header -->
@@ -319,17 +275,14 @@
             
             <div class="flex flex-wrap gap-4">
                 <button id="exportPDF" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
-                    <i class="fas fa-file-pdf mr-2"></i>PDF 내보내기 (PDFMake + 한국어)
+                    <i class="fas fa-file-pdf mr-2"></i>PDF 내보내기
                     <span id="pdfStatus" class="ml-2 text-xs bg-red-700 px-2 py-1 rounded-full">준비완료</span>
                 </button>
                 <button id="exportExcel" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
                     <i class="fas fa-file-excel mr-2"></i>Excel 내보내기
                     <span id="excelStatus" class="ml-2 text-xs bg-green-700 px-2 py-1 rounded-full">준비중</span>
                 </button>
-                <button id="exportWord" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
-                    <i class="fas fa-file-word mr-2"></i>Word 내보내기 (안정화)
-                    <span id="wordStatus" class="ml-2 text-xs bg-blue-700 px-2 py-1 rounded-full">준비중</span>
-                </button>
+
             </div>
             
             <!-- 라이브러리 상태 표시 -->
@@ -348,10 +301,7 @@
                         <span id="XLSXStatus" class="w-2 h-2 bg-gray-400 rounded-full"></span>
                         <span>Excel 생성</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <span id="docxStatus" class="w-2 h-2 bg-gray-400 rounded-full"></span>
-                        <span>Word 생성</span>
-                    </div>
+
                     <div class="flex items-center space-x-2">
                         <span id="saveAsStatus" class="w-2 h-2 bg-gray-400 rounded-full"></span>
                         <span>파일 저장</span>
@@ -360,7 +310,6 @@
                 <div class="mt-2 text-xs text-gray-600">
                     <p>💡 PDF는 PDFMake 라이브러리로 한국어를 완벽 지원합니다.</p>
                     <p>💡 PDFMake 실패 시 HTML to PDF 방식으로 자동 대체됩니다.</p>
-                    <p>💡 Word 라이브러리 로딩 실패 시 자동으로 대체 방법을 사용합니다.</p>
                 </div>
             </div>
         </div>

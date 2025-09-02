@@ -142,7 +142,7 @@ class SeminarPlanningApp {
         // 내보내기 버튼들
         document.getElementById('exportPDF').addEventListener('click', () => this.exportToPDF());
         document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
-        document.getElementById('exportWord').addEventListener('click', () => this.exportToWord());
+
         
         // 입력 필드 변경 감지
         this.bindInputEvents();
@@ -1399,7 +1399,7 @@ class SeminarPlanningApp {
                 content: [
                     // 제목
                     {
-                        text: '전사 신기술 세미나 실행계획',
+                        text: this.currentData.session || '전사 신기술 세미나 실행계획',
                         style: 'header',
                         alignment: 'center',
                         margin: [0, 0, 0, 20]
@@ -1416,20 +1416,13 @@ class SeminarPlanningApp {
                             widths: ['*', '*'],
                             body: [
                                 [
-                                    { text: '회차', style: 'tableHeader' },
-                                    { text: this.currentData.session || '미입력', style: 'tableCell' }
-                                ],
-                                [
                                     { text: '목표', style: 'tableHeader' },
                                     { text: this.currentData.objective || '미입력', style: 'tableCell' }
                                 ],
                                 [
-                                    { text: '일시', style: 'tableHeader' },
-                                    { text: this.currentData.datetime || '미입력', style: 'tableCell' }
-                                ],
-                                [
-                                    { text: '장소', style: 'tableHeader' },
-                                    { text: this.currentData.location || '미입력', style: 'tableCell' }
+                                    { text: '일시/장소', style: 'tableHeader' },
+                                    { text: this.currentData.datetime || '미입력' 
+                                    + ' / ' + this.currentData.location || '미입력', style: 'tableCell' }
                                 ],
                                 [
                                     { text: '참석 대상', style: 'tableHeader' },
@@ -1700,25 +1693,19 @@ class SeminarPlanningApp {
 </head>
 <body>
     <div class="header">
-        <h1>전사 신기술 세미나 실행계획</h1>
+        <h1>${safeText(this.currentData.session)} 전사 신기술 세미나 실행계획 </h1>
     </div>
     
     <div class="section">
         <h2>기본 정보</h2>
         <div class="info-item">
-            <span class="info-label">회차:</span> ${safeText(this.currentData.session)}
+            <span class="info-label">1.목표:</span> ${safeText(this.currentData.objective)}
         </div>
         <div class="info-item">
-            <span class="info-label">목표:</span> ${safeText(this.currentData.objective)}
+            <span class="info-label">2.일시/장소소:</span> ${safeText(this.currentData.datetime)} / ${safeText(this.currentData.location)}
         </div>
         <div class="info-item">
-            <span class="info-label">일시:</span> ${safeText(this.currentData.datetime)}
-        </div>
-        <div class="info-item">
-            <span class="info-label">장소:</span> ${safeText(this.currentData.location)}
-        </div>
-        <div class="info-item">
-            <span class="info-label">참석 대상:</span> ${safeText(this.currentData.attendees)}
+            <span class="info-label">3.참석 대상:</span> ${safeText(this.currentData.attendees)}
         </div>
     </div>
 `;
@@ -1727,7 +1714,7 @@ class SeminarPlanningApp {
         if (this.currentData.timeSchedule && this.currentData.timeSchedule.length > 0) {
             html += `
     <div class="section">
-        <h2>시간 계획</h2>
+        <h2>4.시간 계획</h2>
         <table>
             <thead>
                 <tr>
@@ -1760,7 +1747,7 @@ class SeminarPlanningApp {
         if (this.currentData.attendeeList && this.currentData.attendeeList.length > 0) {
             html += `
     <div class="section">
-        <h2>세미나 참석 명단</h2>
+        <h2>[별첨] 세미나 참석 명단</h2>
         <table>
             <thead>
                 <tr>
@@ -2020,370 +2007,20 @@ class SeminarPlanningApp {
         }
     }
 
-    exportToWord() {
-        try {
-            this.showLoading(true);
-            
-            // docx 라이브러리 확인 및 대체 방법 제공
-            if (!window.docx) {
-                console.warn('⚠️ docx 라이브러리를 찾을 수 없습니다. 대체 방법을 시도합니다.');
-                this.showSuccessToast('Word 라이브러리 로딩 중... 대체 방법으로 내보내기를 진행합니다.');
-                
-                // 대체 방법: HTML을 Word 형식으로 내보내기
-                this.exportToWordAlternative();
-                return;
-            }
-            
-            console.log('✅ docx 라이브러리 사용');
 
-            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = window.docx;
-            
-            // 문서 생성
-            const doc = new Document({
-                sections: [{
-                    properties: {},
-                    children: [
-                        // 제목
-                        new Paragraph({
-                            text: '전사 신기술 세미나 실행계획',
-                            heading: 'Heading1',
-                            alignment: AlignmentType.CENTER
-                        }),
-                        
-                        // 기본 정보 섹션
-                        new Paragraph({
-                            text: '기본 정보',
-                            heading: 'Heading2'
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: '회차: ', bold: true }),
-                                new TextRun({ text: this.currentData.session || '미입력' })
-                            ]
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: '목표: ', bold: true }),
-                                new TextRun({ text: this.currentData.objective || '미입력' })
-                            ]
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: '일시: ', bold: true }),
-                                new TextRun({ text: this.currentData.datetime || '미입력' })
-                            ]
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: '장소: ', bold: true }),
-                                new TextRun({ text: this.currentData.location || '미입력' })
-                            ]
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: '참석 대상: ', bold: true }),
-                                new TextRun({ text: this.currentData.attendees || '미입력' })
-                            ]
-                        }),
-                        
-                        // 시간 계획 섹션
-                        new Paragraph({
-                            text: '시간 계획',
-                            heading: 'Heading2'
-                        })
-                    ]
-                }]
-            });
-            
-            // 시간 계획 테이블 추가
-            if (this.currentData.timeSchedule.length > 0) {
-                const timeTableRows = [
-                    new TableRow({
-                        children: [
-                            new TableCell({ children: [new Paragraph({ text: '구분' })] }),
-                            new TableCell({ children: [new Paragraph({ text: '주요 내용' })] }),
-                            new TableCell({ children: [new Paragraph({ text: '시간' })] }),
-                            new TableCell({ children: [new Paragraph({ text: '담당' })] })
-                        ]
-                    })
-                ];
-                
-                this.currentData.timeSchedule.forEach(item => {
-                    timeTableRows.push(new TableRow({
-                        children: [
-                            new TableCell({ children: [new Paragraph({ text: item.type || '' })] }),
-                            new TableCell({ children: [new Paragraph({ text: item.content || '' })] }),
-                            new TableCell({ children: [new Paragraph({ text: item.time || '' })] }),
-                            new TableCell({ children: [new Paragraph({ text: item.responsible || '' })] })
-                        ]
-                    }));
-                });
-                
-                const timeTable = new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: timeTableRows
-                });
-                
-                doc.addSection({
-                    children: [timeTable]
-                });
-            }
-            
-            // 참석자 명단 섹션 추가
-            if (this.currentData.attendeeList.length > 0) {
-                const attendeeTableRows = [
-                    new TableRow({
-                        children: [
-                            new TableCell({ children: [new Paragraph({ text: 'No' })] }),
-                            new TableCell({ children: [new Paragraph({ text: '성명' })] }),
-                            new TableCell({ children: [new Paragraph({ text: '직급' })] }),
-                            new TableCell({ children: [new Paragraph({ text: '소속' })] }),
-                            new TableCell({ children: [new Paragraph({ text: '업무' })] })
-                        ]
-                    })
-                ];
-                
-                this.currentData.attendeeList.forEach((item, index) => {
-                    attendeeTableRows.push(new TableRow({
-                        children: [
-                            new TableCell({ children: [new Paragraph({ text: (index + 1).toString() })] }),
-                            new TableCell({ children: [new Paragraph({ text: item.name || '' })] }),
-                            new TableCell({ children: [new Paragraph({ text: item.position || '' })] }),
-                            new TableCell({ children: [new Paragraph({ text: item.department || '' })] }),
-                            new TableCell({ children: [new Paragraph({ text: item.work || '' })] })
-                        ]
-                    }));
-                });
-                
-                const attendeeTable = new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: attendeeTableRows
-                });
-                
-                doc.addSection({
-                    children: [
-                        new Paragraph({
-                            text: '세미나 참석 명단',
-                            heading: 'Heading2'
-                        }),
-                        attendeeTable
-                    ]
-                });
-            }
-            
-            // 한국어 파일명 생성
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            const fileName = `세미나_실행계획_${year}${month}${day}.docx`;
-            
-            window.docx.Packer.toBlob(doc).then(blob => {
-                if (window.saveAs) {
-                    window.saveAs(blob, fileName);
-                    this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다.');
-                } else {
-                    // FileSaver.js가 없는 경우 직접 다운로드
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다.');
-                }
-            }).catch(error => {
-                throw new Error(`Word 문서 생성 실패: ${error.message}`);
-            });
-            
-        } catch (error) {
-            console.error('Word 내보내기 오류:', error);
-            this.showErrorToast(`Word 내보내기 실패: ${error.message}`);
-        } finally {
-            this.showLoading(false);
-        }
-    }
 
-    // 대체 Word 내보내기 방법 (HTML 기반)
-    exportToWordAlternative() {
-        try {
-            console.log('🔄 대체 Word 내보내기 방법 사용');
-            
-            // 데이터 유효성 검사
-            if (!this.currentData || (!this.currentData.session && !this.currentData.objective)) {
-                throw new Error('내보낼 데이터가 없습니다. 먼저 세미나 정보를 입력해주세요.');
-            }
-            
-            // HTML 콘텐츠 생성
-            const htmlContent = this.generateWordHTML();
-            
-            if (!htmlContent || htmlContent.length < 100) {
-                throw new Error('Word 문서 생성에 실패했습니다.');
-            }
-            
-            // UTF-8 인코딩으로 Blob 생성
-            const blob = new Blob([htmlContent], { 
-                type: 'application/msword; charset=UTF-8' 
-            });
-            
-            // 파일명 생성
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            const fileName = `세미나_실행계획_${year}${month}${day}.doc`;
-            
-            // 파일 저장
-            if (window.saveAs) {
-                window.saveAs(blob, fileName);
-                this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다. (대체 방법)');
-            } else {
-                // FileSaver.js가 없는 경우 직접 다운로드
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                this.showSuccessToast('Word 문서가 성공적으로 내보내졌습니다. (대체 방법)');
-            }
-            
-        } catch (error) {
-            console.error('대체 Word 내보내기 오류:', error);
-            this.showErrorToast(`Word 내보내기 실패: ${error.message}`);
-        } finally {
-            this.showLoading(false);
-        }
-    }
 
-    // Word 형식의 HTML 콘텐츠 생성 (UTF-8 인코딩 보장)
-    generateWordHTML() {
-        const today = new Date();
-        const dateString = today.toLocaleDateString('ko-KR');
-        
-        let html = `
-<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="ProgId" content="Word.Document">
-    <meta name="Generator" content="Microsoft Word 15">
-    <meta name="Originator" content="Microsoft Word 15">
-    <title>전사 신기술 세미나 실행계획</title>
-    <style>
-        body { font-family: '맑은 고딕', 'Malgun Gothic', Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
-        h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { border: 1px solid #bdc3c7; padding: 8px; text-align: left; }
-        th { background-color: #ecf0f1; font-weight: bold; }
-        .info-item { margin: 10px 0; }
-        .info-label { font-weight: bold; color: #2c3e50; }
-        .footer { text-align: center; margin-top: 40px; color: #7f8c8d; font-size: 12px; }
-    </style>
-</head>
-<body>
-    <h1>전사 신기술 세미나 실행계획</h1>
-    
-    <h2>기본 정보</h2>
-    <div class="info-item">
-        <span class="info-label">회차:</span> ${this.ensureUTF8Text(this.currentData.session || '미입력')}
-    </div>
-    <div class="info-item">
-        <span class="info-label">목표:</span> ${this.ensureUTF8Text(this.currentData.objective || '미입력')}
-    </div>
-    <div class="info-item">
-        <span class="info-label">일시:</span> ${this.ensureUTF8Text(this.currentData.datetime || '미입력')}
-    </div>
-    <div class="info-item">
-        <span class="info-label">장소:</span> ${this.ensureUTF8Text(this.currentData.location || '미입력')}
-    </div>
-    <div class="info-item">
-        <span class="info-label">참석 대상:</span> ${this.ensureUTF8Text(this.currentData.attendees || '미입력')}
-    </div>
-`;
 
-        // 시간 계획 테이블 (UTF-8 처리)
-        if (this.currentData.timeSchedule && this.currentData.timeSchedule.length > 0) {
-            html += `
-    <h2>시간 계획</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>구분</th>
-                <th>주요 내용</th>
-                <th>시간</th>
-                <th>담당</th>
-            </tr>
-        </thead>
-        <tbody>
-`;
-            this.currentData.timeSchedule.forEach(item => {
-                html += `
-            <tr>
-                <td>${this.ensureUTF8Text(item.type || '')}</td>
-                <td>${this.ensureUTF8Text(item.content || '')}</td>
-                <td>${this.ensureUTF8Text(item.time || '')}</td>
-                <td>${this.ensureUTF8Text(item.responsible || '')}</td>
-            </tr>
-`;
-            });
-            html += `
-        </tbody>
-    </table>
-`;
-        }
 
-        // 참석자 명단 테이블 (UTF-8 처리)
-        if (this.currentData.attendeeList && this.currentData.attendeeList.length > 0) {
-            html += `
-    <h2>세미나 참석 명단</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>성명</th>
-                <th>직급</th>
-                <th>소속</th>
-                <th>업무</th>
-            </tr>
-        </thead>
-        <tbody>
-`;
-            this.currentData.attendeeList.forEach((item, index) => {
-                html += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${this.ensureUTF8Text(item.name || '')}</td>
-                <td>${this.ensureUTF8Text(item.position || '')}</td>
-                <td>${this.ensureUTF8Text(item.department || '')}</td>
-                <td>${this.ensureUTF8Text(item.work || '')}</td>
-            </tr>
-`;
-            });
-            html += `
-        </tbody>
-    </table>
-`;
-        }
 
-        html += `
-    <div class="footer">
-        <p>생성일: ${dateString}</p>
-        <p>전사 신기술 세미나 실행계획 시스템</p>
-    </div>
-</body>
-</html>
-`;
 
-        return html;
-    }
+
+
+
+
+
+
+
 
     // 데이터 삭제 메서드
     async deleteData() {
