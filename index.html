@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>전사 신기술 세미나 실행계획</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -97,29 +98,43 @@
     <!-- 💾 파일 저장: FileSaver.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-    <!-- 📝 Word 문서: docx (여러 CDN 시도) -->
-    <script src="https://unpkg.com/docx@8.2.3/build/index.js"></script>
+    <!-- 📝 Word 문서: docx (안정적인 로딩) -->
     <script>
-        // docx 라이브러리 로딩 확인 및 대체 방법
+        // docx 라이브러리 로딩 관리
+        let docxLoadAttempts = 0;
+        const maxDocxAttempts = 3;
+        const docxCDNs = [
+            'https://unpkg.com/docx@8.2.3/build/index.js',
+            'https://cdn.jsdelivr.net/npm/docx@8.2.3/build/index.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/docx/8.2.3/index.js'
+        ];
+
+        function loadDocxLibrary() {
+            if (docxLoadAttempts >= maxDocxAttempts) {
+                console.warn('⚠️ docx 라이브러리 모든 CDN 로딩 실패, 대체 방법 사용');
+                updateLibraryStatus('docxStatus', false);
+                updateExportButtonStatus('wordStatus', '대체방법 사용', 'bg-yellow-600');
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = docxCDNs[docxLoadAttempts];
+            script.onload = function() {
+                console.log(`✅ docx 라이브러리 로드 완료 (CDN ${docxLoadAttempts + 1})`);
+                updateLibraryStatus('docxStatus', true);
+                updateExportButtonStatus('wordStatus', '준비완료', 'bg-green-700');
+            };
+            script.onerror = function() {
+                console.warn(`⚠️ docx 라이브러리 CDN ${docxLoadAttempts + 1} 로딩 실패`);
+                docxLoadAttempts++;
+                setTimeout(loadDocxLibrary, 1000); // 1초 후 다음 CDN 시도
+            };
+            document.head.appendChild(script);
+        }
+
+        // 페이지 로드 후 docx 라이브러리 로딩 시작
         window.addEventListener('load', function() {
-            setTimeout(function() {
-                if (!window.docx) {
-                    console.warn('⚠️ docx 라이브러리 로딩 실패, 대체 CDN 시도 중...');
-                    // 대체 CDN 시도
-                    const script = document.createElement('script');
-                    script.src = 'https://cdn.jsdelivr.net/npm/docx@8.2.3/build/index.js';
-                    script.onload = function() {
-                        console.log('✅ docx 라이브러리 대체 CDN에서 로드 완료');
-                        checkExportLibraries();
-                    };
-                    script.onerror = function() {
-                        console.error('❌ docx 라이브러리 모든 CDN 로딩 실패');
-                        updateLibraryStatus('docxStatus', false);
-                        updateExportButtonStatus('wordStatus', '라이브러리 오류', 'bg-red-700');
-                    };
-                    document.head.appendChild(script);
-                }
-            }, 2000);
+            setTimeout(loadDocxLibrary, 1000);
         });
     </script>
 </head>
@@ -305,6 +320,9 @@
                         <span id="saveAsStatus" class="w-2 h-2 bg-gray-400 rounded-full"></span>
                         <span>파일 저장</span>
                     </div>
+                </div>
+                <div class="mt-2 text-xs text-gray-600">
+                    <p>💡 Word 라이브러리 로딩 실패 시 자동으로 대체 방법을 사용합니다.</p>
                 </div>
             </div>
         </div>
