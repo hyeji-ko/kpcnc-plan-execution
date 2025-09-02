@@ -97,8 +97,31 @@
     <!-- 💾 파일 저장: FileSaver.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-    <!-- 📝 Word 문서: docx (안정적인 CDN) -->
+    <!-- 📝 Word 문서: docx (여러 CDN 시도) -->
     <script src="https://unpkg.com/docx@8.2.3/build/index.js"></script>
+    <script>
+        // docx 라이브러리 로딩 확인 및 대체 방법
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (!window.docx) {
+                    console.warn('⚠️ docx 라이브러리 로딩 실패, 대체 CDN 시도 중...');
+                    // 대체 CDN 시도
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/docx@8.2.3/build/index.js';
+                    script.onload = function() {
+                        console.log('✅ docx 라이브러리 대체 CDN에서 로드 완료');
+                        checkExportLibraries();
+                    };
+                    script.onerror = function() {
+                        console.error('❌ docx 라이브러리 모든 CDN 로딩 실패');
+                        updateLibraryStatus('docxStatus', false);
+                        updateExportButtonStatus('wordStatus', '라이브러리 오류', 'bg-red-700');
+                    };
+                    document.head.appendChild(script);
+                }
+            }, 2000);
+        });
+    </script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Header -->
@@ -249,7 +272,7 @@
             
             <div class="flex flex-wrap gap-4">
                 <button id="exportPDF" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
-                    <i class="fas fa-file-pdf mr-2"></i>PDF 내보내기
+                    <i class="fas fa-file-pdf mr-2"></i>PDF 내보내기 (한국어)
                     <span id="pdfStatus" class="ml-2 text-xs bg-red-700 px-2 py-1 rounded-full">준비중</span>
                 </button>
                 <button id="exportExcel" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
@@ -257,7 +280,7 @@
                     <span id="excelStatus" class="ml-2 text-xs bg-green-700 px-2 py-1 rounded-full">준비중</span>
                 </button>
                 <button id="exportWord" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
-                    <i class="fas fa-file-word mr-2"></i>Word 내보내기
+                    <i class="fas fa-file-word mr-2"></i>Word 내보내기 (안정화)
                     <span id="wordStatus" class="ml-2 text-xs bg-blue-700 px-2 py-1 rounded-full">준비중</span>
                 </button>
             </div>
