@@ -1701,7 +1701,10 @@ class SeminarPlanningApp {
             
             // 나머지 부분들을 4칸 들여쓰기와 함께 추가
             for (let i = 1; i < parts.length; i++) {
-                if (parts[i].trim()) {
+                if (i == 1 && parts[i].trim()) {
+                    result += '&nbsp;&nbsp;&nbsp;&nbsp;□ ' + parts[i]; // 4칸 들여쓰기
+                }
+                if (i !=1 && parts[i].trim()) {
                     result += '<br>&nbsp;&nbsp;&nbsp;&nbsp;□ ' + parts[i]; // 4칸 들여쓰기
                 }
             }
@@ -1846,13 +1849,13 @@ class SeminarPlanningApp {
     
     <div class="section">
         <h2>1. 목표</h2>
-        <p class="info-content">    ${formatObjectiveHTML(safeText(this.currentData.objective))}</p>
+        <p class="info-content">${formatObjectiveHTML(safeText(this.currentData.objective))}</p>
         
         <h2>2. 일시/장소</h2>
-        <p class="info-content">    □ ${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}</p>
+        <p class="info-content">&nbsp;&nbsp;&nbsp;&nbsp;□ ${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}</p>
         
         <h2>3. 참석 대상</h2>
-        <p class="info-content">    □ ${safeText(this.currentData.attendees)}</p>
+        <p class="info-content">&nbsp;&nbsp;&nbsp;&nbsp;□ ${safeText(this.currentData.attendees)}</p>
     </div>
 `;
 
