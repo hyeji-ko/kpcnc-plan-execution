@@ -1051,9 +1051,11 @@ class SeminarPlanningApp {
     async loadSeminarDetail(id) {
         try {
             this.showLoading(true);
+            console.log('🔍 세미나 상세 정보 로드 시작, ID:', id);
             
             // Firebase에서 해당 문서 조회
             const result = await this.getSeminarById(id);
+            console.log('📊 조회 결과:', result);
             
             if (result.success) {
                 // 모달 닫기
@@ -1081,19 +1083,25 @@ class SeminarPlanningApp {
                     })) : []
                 };
                 
-                console.log('📋 로드된 세미나 데이터:', normalizedData);
+                console.log('📋 정규화된 세미나 데이터:', normalizedData);
+                console.log('📋 시간 계획 데이터:', normalizedData.timeSchedule);
+                console.log('📋 참석자 데이터:', normalizedData.attendeeList);
                 
                 // 메인 화면에 데이터 로드
                 this.currentData = normalizedData;
-                this.currentDocumentId = result.id;
+                this.currentDocumentId = id; // 매개변수로 받은 id 사용
+                console.log('📋 currentData 설정 완료:', this.currentData);
+                
                 this.populateForm();
+                console.log('📋 폼 채우기 완료');
                 
                 this.showSuccessToast('세미나 계획을 불러왔습니다.');
             } else {
+                console.error('❌ 세미나 조회 실패:', result.message);
                 this.showErrorToast(result.message);
             }
         } catch (error) {
-            console.error('상세 정보 로드 오류:', error);
+            console.error('❌ 상세 정보 로드 오류:', error);
             this.showErrorToast('상세 정보 로드 중 오류가 발생했습니다.');
         } finally {
             this.showLoading(false);
