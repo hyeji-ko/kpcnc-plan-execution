@@ -62,13 +62,7 @@ class SeminarPlanningApp {
         if (name === 'jsPDF' && (window.jsPDF || window.jspdf?.jsPDF)) {
             return true;
         }
-        if (name === 'XLSX' && window.XLSX) {
-            return true;
-        }
         if (name === 'saveAs' && window.saveAs) {
-            return true;
-        }
-        if (name === 'docx' && window.docx) {
             return true;
         }
         
@@ -95,19 +89,9 @@ class SeminarPlanningApp {
             }
         }
         
-        if (name === 'XLSX' && window.XLSX) {
-            console.log(`🎯 ${name} 라이브러리 (window.XLSX) 접근 성공`);
-            return window.XLSX;
-        }
-        
         if (name === 'saveAs' && window.saveAs) {
             console.log(`🎯 ${name} 라이브러리 (window.saveAs) 접근 성공`);
             return window.saveAs;
-        }
-        
-        if (name === 'docx' && window.docx) {
-            console.log(`🎯 ${name} 라이브러리 (window.docx) 접근 성공`);
-            return window.docx;
         }
         
         console.error(`❌ ${name} 라이브러리를 찾을 수 없습니다.`);
