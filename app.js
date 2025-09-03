@@ -1953,11 +1953,23 @@ class SeminarPlanningApp {
             const processedSchedule = this.processTimeScheduleForMerging(this.currentData.timeSchedule);
             
             processedSchedule.forEach((item, index) => {
-                const typeCell = item.rowspan && item.rowspan > 1 ? 
-                    `<td class="center-align" rowspan="${item.rowspan}">${safeText(item.type)}</td>` :
-                    `<td class="center-align">${safeText(item.type)}</td>`;
-                
-                html += `
+                // 병합된 행인지 확인
+                if (item.isMergedRow) {
+                    // 병합된 행은 구분 컬럼을 제외하고 나머지만 표시
+                    html += `
+                <tr>
+                    <td>${formatContentHTML(safeText(item.content))}</td>
+                    <td class="center-align">${safeText(item.time)}</td>
+                    <td class="center-align">${safeText(item.responsible)}</td>
+                </tr>
+`;
+                } else {
+                    // 일반 행 또는 병합의 첫 번째 행
+                    const typeCell = item.rowspan && item.rowspan > 1 ? 
+                        `<td class="center-align" rowspan="${item.rowspan}">${safeText(item.type)}</td>` :
+                        `<td class="center-align">${safeText(item.type)}</td>`;
+                    
+                    html += `
                 <tr>
                     ${typeCell}
                     <td>${formatContentHTML(safeText(item.content))}</td>
@@ -1965,6 +1977,7 @@ class SeminarPlanningApp {
                     <td class="center-align">${safeText(item.responsible)}</td>
                 </tr>
 `;
+                }
             });
             html += `
             </tbody>
@@ -2058,9 +2071,14 @@ class SeminarPlanningApp {
             // 그룹에 항목이 여러 개면 첫 번째 항목에 rowspan 설정
             processed.push({ ...group[0], rowspan: group.length });
             
-            // 나머지 항목들은 구분 컬럼을 빈 값으로 설정
+            // 나머지 항목들은 구분 컬럼만 빈 값으로 설정하고 나머지는 그대로 유지
             for (let i = 1; i < group.length; i++) {
-                processed.push({ ...group[i], type: '', rowspan: 1 });
+                processed.push({ 
+                    ...group[i], 
+                    type: '', 
+                    rowspan: 1,
+                    isMergedRow: true  // 병합된 행임을 표시
+                });
             }
         }
     }
