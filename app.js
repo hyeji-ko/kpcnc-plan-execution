@@ -1818,7 +1818,6 @@ class SeminarPlanningApp {
             font-size: 16px;
             font-weight: bold;
             color: #34495e;
-            border-bottom: 1px solid #bdc3c7;
             padding-bottom: 5px;
             margin-bottom: 15px;
         }
