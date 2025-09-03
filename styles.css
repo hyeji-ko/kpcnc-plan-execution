@@ -310,7 +310,7 @@
     word-wrap: break-word !important;
     word-break: break-word !important;
     vertical-align: middle !important;
-    text-align: center !important;
+    text-align: left !important;
     min-height: 60px !important;
 }
 
@@ -319,7 +319,7 @@
     min-height: 40px !important;
     line-height: 1.4 !important;
     font-family: inherit !important;
-    text-align: center !important;
+    text-align: left !important;
     vertical-align: middle !important;
 }
 
