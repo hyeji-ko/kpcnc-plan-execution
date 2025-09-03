@@ -1535,7 +1535,7 @@ class SeminarPlanningApp {
                     { text: '4. 시간 계획', style: 'sectionHeader', margin: [0, 20, 0, 10] },
                     {
                         table: {
-                            widths: ['*', '*', '*', '*'],
+                            widths: ['auto', '*', 'auto', 'auto'],
                             body: timeScheduleRows
                         },
                         margin: [0, 0, 0, 10]
@@ -1863,19 +1863,25 @@ class SeminarPlanningApp {
         }
         .time-schedule-table th:nth-child(1),
         .time-schedule-table td:nth-child(1) {
-            width: 15%;
+            width: auto;
+            min-width: 60px;
+            max-width: 80px;
         }
         .time-schedule-table th:nth-child(2),
         .time-schedule-table td:nth-child(2) {
-            width: 50%;
+            width: 100%;
         }
         .time-schedule-table th:nth-child(3),
         .time-schedule-table td:nth-child(3) {
-            width: 20%;
+            width: auto;
+            min-width: 60px;
+            max-width: 80px;
         }
         .time-schedule-table th:nth-child(4),
         .time-schedule-table td:nth-child(4) {
-            width: 15%;
+            width: auto;
+            min-width: 60px;
+            max-width: 80px;
         }
         .attendee-table {
             width: 100%;
