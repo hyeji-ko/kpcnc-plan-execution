@@ -56,16 +56,37 @@ async function loadData() {
                 return { success: false, message: '저장된 데이터가 없습니다.' };
             }
         } else {
-            // Firebase에서 불러오기 (가장 최근 세미나 개최 회차가 가장 높고, 같은 회차에 여러 일시가 있으면 일시가 가장 높은 대상)
-            const snapshot = await db.collection('seminarPlans')
-                .orderBy('session', 'desc')
-                .orderBy('datetime', 'desc')
-                .limit(1)
-                .get();
+            // Firebase에서 불러오기 (모든 데이터를 가져온 후 JavaScript에서 정렬)
+            const snapshot = await db.collection('seminarPlans').get();
             
             if (!snapshot.empty) {
-                const doc = snapshot.docs[0];
-                return { success: true, data: doc.data(), id: doc.id };
+                const plans = [];
+                snapshot.forEach(doc => {
+                    plans.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                // JavaScript에서 정렬: 세미나 개최 회차 내림차순, 일시 내림차순
+                plans.sort((a, b) => {
+                    // 세미나 개최 회차 비교 (숫자로 변환하여 비교)
+                    const sessionA = parseInt(a.session) || 0;
+                    const sessionB = parseInt(b.session) || 0;
+                    
+                    if (sessionA !== sessionB) {
+                        return sessionB - sessionA; // 내림차순
+                    }
+                    
+                    // 같은 회차인 경우 일시 비교
+                    const dateA = new Date(a.datetime || '1900-01-01');
+                    const dateB = new Date(b.datetime || '1900-01-01');
+                    return dateB - dateA; // 내림차순
+                });
+                
+                // 가장 최신 데이터 반환
+                const latestPlan = plans[0];
+                return { success: true, data: latestPlan, id: latestPlan.id };
             } else {
                 return { success: false, message: '저장된 데이터가 없습니다.' };
             }
@@ -130,11 +151,8 @@ async function loadAllPlans() {
                 return { success: true, data: [] };
             }
         } else {
-            // Firebase에서 모든 계획 불러오기 (세미나 개최 회차 내림차순, 일시 내림차순)
-            const snapshot = await db.collection('seminarPlans')
-                .orderBy('session', 'desc')
-                .orderBy('datetime', 'desc')
-                .get();
+            // Firebase에서 모든 계획 불러오기 (모든 데이터를 가져온 후 JavaScript에서 정렬)
+            const snapshot = await db.collection('seminarPlans').get();
             
             const plans = [];
             snapshot.forEach(doc => {
@@ -144,6 +162,22 @@ async function loadAllPlans() {
                     id: doc.id,
                     ...docData
                 });
+            });
+            
+            // JavaScript에서 정렬: 세미나 개최 회차 내림차순, 일시 내림차순
+            plans.sort((a, b) => {
+                // 세미나 개최 회차 비교 (숫자로 변환하여 비교)
+                const sessionA = parseInt(a.session) || 0;
+                const sessionB = parseInt(b.session) || 0;
+                
+                if (sessionA !== sessionB) {
+                    return sessionB - sessionA; // 내림차순
+                }
+                
+                // 같은 회차인 경우 일시 비교
+                const dateA = new Date(a.datetime || '1900-01-01');
+                const dateB = new Date(b.datetime || '1900-01-01');
+                return dateB - dateA; // 내림차순
             });
             
             console.log(`🔥 Firebase에서 총 ${plans.length}개의 계획을 로드했습니다.`);
