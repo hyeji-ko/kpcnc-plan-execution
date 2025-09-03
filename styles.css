@@ -272,9 +272,9 @@
 
 #timeTableBody tr td:nth-child(3), /* 시간 컬럼 */
 #timeTableBody tr th:nth-child(3) {
-    width: 130px !important;
-    min-width: 130px !important;
-    max-width: 150px !important;
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 200px !important;
 }
 
 #timeTableBody tr td:nth-child(4), /* 담당 컬럼 */
@@ -303,6 +303,29 @@
     white-space: normal !important;
     word-wrap: break-word !important;
     word-break: break-word !important;
+    vertical-align: top !important;
+    min-height: 60px !important;
+}
+
+/* Textarea in time schedule table */
+#timeTableBody tr td textarea {
+    min-height: 40px !important;
+    line-height: 1.4 !important;
+    font-family: inherit !important;
+}
+
+/* Search result table styling for long content */
+#searchResultBody tr td {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    vertical-align: top !important;
+    max-width: 300px !important;
+}
+
+#searchResultBody tr td:nth-child(3) { /* 목표 컬럼 */
+    max-width: 400px !important;
+    min-width: 200px !important;
 }
 
 /* Print styles */
