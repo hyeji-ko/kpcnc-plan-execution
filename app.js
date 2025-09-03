@@ -204,7 +204,8 @@ class SeminarPlanningApp {
                            data-index="0" data-field="content">
                 </td>
                 <td class="px-4 py-3 border-b">
-                    <input type="time" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="시간을 입력하세요 (예: 16:00)" 
                            data-index="0" data-field="time">
                 </td>
                 <td class="px-4 py-3 border-b">
@@ -313,7 +314,8 @@ class SeminarPlanningApp {
                        data-index="${rowCount}" data-field="content">
             </td>
             <td class="px-4 py-3 border-b">
-                <input type="time" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                       placeholder="시간을 입력하세요 (예: 16:00)" 
                        data-index="${rowCount}" data-field="time">
             </td>
             <td class="px-4 py-3 border-b">
@@ -492,6 +494,7 @@ class SeminarPlanningApp {
         if (placeholder.includes('소속')) return 'department';
         if (placeholder.includes('업무')) return 'work';
         if (placeholder.includes('주요 내용')) return 'content';
+        if (placeholder.includes('시간')) return 'time';
         if (placeholder.includes('담당자')) return 'responsible';
         return '';
     }
@@ -521,7 +524,8 @@ class SeminarPlanningApp {
                            data-index="${index}" data-field="content">
                 </td>
                 <td class="px-4 py-3 border-b">
-                    <input type="time" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="시간을 입력하세요 (예: 16:00)" 
                            data-index="${index}" data-field="time">
                 </td>
                 <td class="px-4 py-3 border-b">
