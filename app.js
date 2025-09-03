@@ -719,9 +719,25 @@ class SeminarPlanningApp {
             this.collectFormData();
             
             let result;
+            let isNewRegistration = false;
+            
             if (this.currentDocumentId) {
-                // 기존 문서 업데이트
-                result = await updateData(this.currentDocumentId, this.currentData);
+                // 기존 데이터와 비교하여 회차나 일시가 다르면 신규 등록
+                const existingData = await this.getExistingData();
+                if (existingData && 
+                    (existingData.session !== this.currentData.session || 
+                     existingData.datetime !== this.currentData.datetime)) {
+                    // 회차나 일시가 다르면 신규 등록
+                    isNewRegistration = true;
+                    this.currentDocumentId = null; // 기존 문서 ID 초기화
+                    result = await saveData(this.currentData);
+                    if (result.success && result.id) {
+                        this.currentDocumentId = result.id; // 새로 생성된 문서 ID 저장
+                    }
+                } else {
+                    // 기존 문서 업데이트
+                    result = await updateData(this.currentDocumentId, this.currentData);
+                }
             } else {
                 // 새 문서 생성
                 result = await saveData(this.currentData);
@@ -731,7 +747,10 @@ class SeminarPlanningApp {
             }
             
             if (result.success) {
-                this.showSuccessToast(result.message);
+                const message = isNewRegistration ? 
+                    '회차나 일시가 변경되어 새로운 세미나로 등록되었습니다.' : 
+                    result.message;
+                this.showSuccessToast(message);
             } else {
                 this.showErrorToast(result.message);
             }
@@ -740,6 +759,20 @@ class SeminarPlanningApp {
             this.showErrorToast('저장 중 오류가 발생했습니다.');
         } finally {
             this.showLoading(false);
+        }
+    }
+
+    // 기존 데이터 가져오기 (비교용)
+    async getExistingData() {
+        try {
+            if (this.currentDocumentId) {
+                const result = await loadData(this.currentDocumentId);
+                return result.success ? result.data : null;
+            }
+            return null;
+        } catch (error) {
+            console.error('기존 데이터 조회 오류:', error);
+            return null;
         }
     }
 
@@ -1244,9 +1277,15 @@ class SeminarPlanningApp {
         // 시간 계획 테이블 입력 필드 초기화
         const timeRows = document.getElementById('timeTableBody').children;
         Array.from(timeRows).forEach(row => {
-            const inputs = row.querySelectorAll('input, select');
+            const inputs = row.querySelectorAll('input, select, textarea');
             if (inputs[0]) inputs[0].value = ''; // 구분
-            if (inputs[1]) inputs[1].value = ''; // 주요 내용
+            if (inputs[1]) {
+                inputs[1].value = ''; // 주요 내용
+                // textarea의 경우 textContent도 초기화
+                if (inputs[1].tagName === 'TEXTAREA') {
+                    inputs[1].textContent = '';
+                }
+            }
             if (inputs[2]) inputs[2].value = ''; // 시간
             if (inputs[3]) inputs[3].value = ''; // 담당
         });
