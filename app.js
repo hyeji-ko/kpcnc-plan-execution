@@ -141,7 +141,9 @@ class SeminarPlanningApp {
         
         // 내보내기 버튼들
         document.getElementById('exportPDF').addEventListener('click', () => this.exportToPDF());
-           
+        document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
+
+        
         // 입력 필드 변경 감지
         this.bindInputEvents();
     }
@@ -1360,16 +1362,19 @@ class SeminarPlanningApp {
         this.showSuccessToast(`일시 기준 ${direction}으로 정렬되었습니다.`);
     }
 
+
+
     exportToPDF() {
         try {
             this.showLoading(true);
             
             // PDFMake 라이브러리 로딩 대기 및 확인
             this.waitForPDFMake().then(() => {
-                console.log('✅ HTML to PDF 방식 사용');
-                this.exportToPDFWithHTML();
+                console.log('✅ PDFMake 라이브러리 사용');
+                this.exportToPDFWithPDFMake();
             }).catch(() => {
-                console.log('🔄 HTML to PDF 방식 로딩 실패');                
+                console.log('🔄 PDFMake 로딩 실패, HTML to PDF 방식 사용');
+                this.exportToPDFWithHTML();
             }).finally(() => {
                 // 로딩 상태 해제는 각 함수에서 처리
             });
@@ -1405,7 +1410,202 @@ class SeminarPlanningApp {
         });
     }
 
-     // HTML to PDF 방식 (대체 방법)
+    // PDFMake를 사용한 PDF 생성 (한국어 완벽 지원)
+    exportToPDFWithPDFMake() {
+        try {
+            // PDFMake 라이브러리 로딩 확인
+            if (!window.pdfMake) {
+                console.warn('⚠️ PDFMake 라이브러리가 로드되지 않았습니다. HTML to PDF 방식으로 전환합니다.');
+                this.exportToPDFWithHTML();
+                return;
+            }
+            
+            // PDFMake 폰트 확인
+            if (!window.pdfMake.fonts) {
+                console.warn('⚠️ PDFMake 폰트가 로드되지 않았습니다. HTML to PDF 방식으로 전환합니다.');
+                this.exportToPDFWithHTML();
+                return;
+            }
+            
+            console.log('✅ PDFMake 라이브러리 로드 완료');
+            console.log('📋 사용 가능한 폰트:', Object.keys(window.pdfMake.fonts));
+            
+            // 안전한 텍스트 처리 함수
+            const safeText = (text) => {
+                if (!text) return '';
+                return String(text).replace(/[\x00-\x1F\x7F-\x9F]/g, '').trim();
+            };
+            
+            // 일시 형식 변환 함수 (T를 공백으로 변경하고 요일 추가)
+            const formatDateTime = (dateTime) => {
+                if (!dateTime) return '';
+                const dateStr = String(dateTime).replace('T', ' ');
+                
+                // 날짜 부분에서 요일 추출
+                const dateMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch) {
+                    const date = new Date(dateMatch[1]);
+                    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                    const weekday = weekdays[date.getDay()];
+                    return dateStr.replace(/^(\d{4}-\d{2}-\d{2})/, `$1 (${weekday})`);
+                }
+                
+                return dateStr;
+            };
+            
+            // PDF 문서 정의
+            const docDefinition = {
+                pageSize: 'A4',
+                pageMargins: [40, 60, 40, 60],
+                defaultStyle: {
+                    fontSize: 10
+                },
+                content: [
+                    // 제목
+                    {
+                        text: safeText(this.currentData.session) || '전사 신기술 세미나 실행계획',
+                        style: 'header',
+                        alignment: 'center',
+                        margin: [0, 0, 0, 20]
+                    },
+                    
+                    // 기본 정보
+                    {
+                        table: {
+                            widths: ['*', '*'],
+                            body: [
+                                [
+                                    { text: '1. 목표', style: 'sectionHeader' },
+                                    { text: safeText(this.currentData.objective) || '미입력', style: 'tableCell' }
+                                ],
+                                [
+                                    { text: '2. 일시/장소', style: 'sectionHeader' },
+                                    { text: (formatDateTime(safeText(this.currentData.datetime)) || '미입력') + ' / ' + (safeText(this.currentData.location) || '미입력'), style: 'tableCell' }
+                                ],
+                                [
+                                    { text: '3. 참석 대상', style: 'sectionHeader' },
+                                    { text: safeText(this.currentData.attendees) || '미입력', style: 'tableCell' }
+                                ]
+                            ]
+                        },
+                        layout: 'noBorders',
+                        margin: [0, 0, 0, 20]
+                    }
+                ],
+                styles: {
+                    header: {
+                        fontSize: 18,
+                        bold: true
+                    },
+                    sectionHeader: {
+                        fontSize: 14,
+                        bold: true,
+                        color: '#2c3e50'
+                    },
+                    tableHeader: {
+                        fontSize: 10,
+                        bold: true,
+                        fillColor: '#ecf0f1'
+                    },
+                    tableCell: {
+                        fontSize: 10
+                    }
+                }
+            };
+
+            // 시간 계획 테이블 추가
+            if (this.currentData.timeSchedule && this.currentData.timeSchedule.length > 0) {
+                const timeScheduleRows = [
+                    [
+                        { text: '구분', style: 'tableHeader' },
+                        { text: '주요 내용', style: 'tableHeader' },
+                        { text: '시간', style: 'tableHeader' },
+                        { text: '담당', style: 'tableHeader' }
+                    ]
+                ];
+
+                this.currentData.timeSchedule.forEach(item => {
+                    timeScheduleRows.push([
+                        { text: safeText(item.type) || '', style: 'tableCell' },
+                        { text: safeText(item.content) || '', style: 'tableCell' },
+                        { text: safeText(item.time) || '', style: 'tableCell' },
+                        { text: safeText(item.responsible) || '', style: 'tableCell' }
+                    ]);
+                });
+
+                docDefinition.content.push(
+                    { text: '4. 시간 계획', style: 'sectionHeader', margin: [0, 20, 0, 10] },
+                    {
+                        table: {
+                            widths: ['*', '*', '*', '*'],
+                            body: timeScheduleRows
+                        },
+                        margin: [0, 0, 0, 20]
+                    }
+                );
+            }
+
+            // 참석자 명단 테이블 추가
+            if (this.currentData.attendeeList && this.currentData.attendeeList.length > 0) {
+                const attendeeRows = [
+                    [
+                        { text: 'No', style: 'tableHeader' },
+                        { text: '성명', style: 'tableHeader' },
+                        { text: '직급', style: 'tableHeader' },
+                        { text: '소속', style: 'tableHeader' },
+                        { text: '업무', style: 'tableHeader' }
+                    ]
+                ];
+
+                this.currentData.attendeeList.forEach((item, index) => {
+                    attendeeRows.push([
+                        { text: (index + 1).toString(), style: 'tableCell' },
+                        { text: safeText(item.name) || '', style: 'tableCell' },
+                        { text: safeText(item.position) || '', style: 'tableCell' },
+                        { text: safeText(item.department) || '', style: 'tableCell' },
+                        { text: safeText(item.work) || '', style: 'tableCell' }
+                    ]);
+                });
+
+                docDefinition.content.push(
+                    { text: '[별첨] 세미나 참석 명단', style: 'sectionHeader', margin: [0, 20, 0, 10] },
+                    {
+                        table: {
+                            widths: ['auto', '*', '*', '*', '*'],
+                            body: attendeeRows
+                        }
+                    }
+                );
+            }
+
+            // 한국어 파일명 생성
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fileName = `세미나_실행계획_${year}${month}${day}.pdf`;
+
+            // PDF 생성 및 다운로드
+            try {
+                const pdfDoc = pdfMake.createPdf(docDefinition);
+                pdfDoc.download(fileName);
+                this.showSuccessToast('PDF가 성공적으로 내보내졌습니다. (PDFMake 사용)');
+                this.showLoading(false); // 성공 시 로딩 해제
+            } catch (pdfError) {
+                console.error('PDFMake PDF 생성 오류:', pdfError);
+                this.showLoading(false); // 오류 시 로딩 해제
+                throw new Error(`PDF 생성 실패: ${pdfError.message}`);
+            }
+            
+        } catch (error) {
+            console.error('PDFMake PDF 생성 오류:', error);
+            console.log('🔄 HTML to PDF 방식으로 대체');
+            this.showLoading(false); // 오류 시 로딩 해제
+            this.exportToPDFWithHTML();
+        }
+    }
+
+    // HTML to PDF 방식 (대체 방법)
     exportToPDFWithHTML() {
         try {
             console.log('🔄 HTML to PDF 방식으로 PDF 생성');
@@ -1418,7 +1618,7 @@ class SeminarPlanningApp {
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
-            const fileName = `${year}${month}${day}전사 신기술 세미나 실행계획.pdf`;
+            const fileName = `${year}${month}${day} 전사 신기술 세미나 실행계획.pdf`;
             
             // Blob 생성
             const blob = new Blob([htmlContent], { type: 'text/html; charset=UTF-8' });
@@ -1600,7 +1800,7 @@ class SeminarPlanningApp {
         .info-label {
             font-weight: bold;
             display: inline-block;
-            width: 100px;
+            width: 80px;
             flex-shrink: 0;
         }
         .info-content {
