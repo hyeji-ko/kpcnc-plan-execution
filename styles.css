@@ -256,6 +256,41 @@
     }
 }
 
+/* Time Schedule Table Column Widths */
+#timeTableBody tr td:nth-child(1), /* 구분 컬럼 */
+#timeTableBody tr th:nth-child(1) {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 100px !important;
+}
+
+#timeTableBody tr td:nth-child(2), /* 주요 내용 컬럼 */
+#timeTableBody tr th:nth-child(2) {
+    width: auto !important;
+    min-width: 200px !important;
+}
+
+#timeTableBody tr td:nth-child(3), /* 시간 컬럼 */
+#timeTableBody tr th:nth-child(3) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 120px !important;
+}
+
+#timeTableBody tr td:nth-child(4), /* 담당 컬럼 */
+#timeTableBody tr th:nth-child(4) {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 150px !important;
+}
+
+#timeTableBody tr td:nth-child(5), /* 작업 컬럼 */
+#timeTableBody tr th:nth-child(5) {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+}
+
 /* Print styles */
 @media print {
     .no-print {
