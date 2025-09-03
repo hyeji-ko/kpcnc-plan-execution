@@ -141,7 +141,7 @@ class SeminarPlanningApp {
         
         // 내보내기 버튼들
         document.getElementById('exportPDF').addEventListener('click', () => this.exportToPDF());
-        
+                
         // 입력 필드 변경 감지
         this.bindInputEvents();
     }
@@ -1468,27 +1468,14 @@ class SeminarPlanningApp {
                     },
                     
                     // 기본 정보
-                    {
-                        table: {
-                            widths: ['*', '*'],
-                            body: [
-                                [
-                                    { text: '1. 목표', style: 'sectionHeader' },
-                                    { text: safeText(this.currentData.objective) || '미입력', style: 'tableCell' }
-                                ],
-                                [
-                                    { text: '2. 일시/장소', style: 'sectionHeader' },
-                                    { text: (formatDateTime(safeText(this.currentData.datetime)) || '미입력') + ' / ' + (safeText(this.currentData.location) || '미입력'), style: 'tableCell' }
-                                ],
-                                [
-                                    { text: '3. 참석 대상', style: 'sectionHeader' },
-                                    { text: safeText(this.currentData.attendees) || '미입력', style: 'tableCell' }
-                                ]
-                            ]
-                        },
-                        layout: 'noBorders',
-                        margin: [0, 0, 0, 20]
-                    }
+                    { text: '1. 목표', style: 'sectionHeader', margin: [0, 0, 0, 5] },
+                    { text: '    □ ' + (safeText(this.currentData.objective) || '미입력'), style: 'tableCell', margin: [0, 0, 0, 10] },
+                    
+                    { text: '2. 일시/장소', style: 'sectionHeader', margin: [0, 0, 0, 5] },
+                    { text: '    □ ' + ((formatDateTime(safeText(this.currentData.datetime)) || '미입력') + ' / ' + (safeText(this.currentData.location) || '미입력')), style: 'tableCell', margin: [0, 0, 0, 10] },
+                    
+                    { text: '3. 참석 대상', style: 'sectionHeader', margin: [0, 0, 0, 5] },
+                    { text: '    □ ' + (safeText(this.currentData.attendees) || '미입력'), style: 'tableCell', margin: [0, 0, 0, 20] }
                 ],
                 styles: {
                     header: {
@@ -1802,9 +1789,10 @@ class SeminarPlanningApp {
             flex-shrink: 0;
         }
         .info-content {
-            flex: 1;
+            margin: 5px 0 15px 0;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            font-size: 12px;
         }
         table {
             width: 100%;
@@ -1873,18 +1861,14 @@ class SeminarPlanningApp {
     </div>
     
     <div class="section">
-        <div class="info-item">
-            <span class="info-label">1. 목표</span>
-            <span class="info-content">${formatObjectiveHTML(safeText(this.currentData.objective))}</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">2. 일시/장소</span>
-            <span class="info-content">${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">3. 참석 대상</span>
-            <span class="info-content">${safeText(this.currentData.attendees)}</span>
-        </div>
+        <h2>1. 목표</h2>
+        <p class="info-content">    ${formatObjectiveHTML(safeText(this.currentData.objective))}</p>
+        
+        <h2>2. 일시/장소</h2>
+        <p class="info-content">    □ ${formatDateTime(safeText(this.currentData.datetime))} / ${safeText(this.currentData.location)}</p>
+        
+        <h2>3. 참석 대상</h2>
+        <p class="info-content">    □ ${safeText(this.currentData.attendees)}</p>
     </div>
 `;
 
@@ -2183,4 +2167,3 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // 전역 함수로 노출 (HTML에서 호출하기 위해)
 window.app = app;
-
