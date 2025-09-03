@@ -56,9 +56,10 @@ async function loadData() {
                 return { success: false, message: '저장된 데이터가 없습니다.' };
             }
         } else {
-            // Firebase에서 불러오기 (최신 문서)
+            // Firebase에서 불러오기 (가장 최근 세미나 개최 회차가 가장 높고, 같은 회차에 여러 일시가 있으면 일시가 가장 높은 대상)
             const snapshot = await db.collection('seminarPlans')
-                .orderBy('createdAt', 'desc')
+                .orderBy('session', 'desc')
+                .orderBy('datetime', 'desc')
                 .limit(1)
                 .get();
             
@@ -129,9 +130,10 @@ async function loadAllPlans() {
                 return { success: true, data: [] };
             }
         } else {
-            // Firebase에서 모든 계획 불러오기
+            // Firebase에서 모든 계획 불러오기 (세미나 개최 회차 내림차순, 일시 내림차순)
             const snapshot = await db.collection('seminarPlans')
-                .orderBy('createdAt', 'desc')
+                .orderBy('session', 'desc')
+                .orderBy('datetime', 'desc')
                 .get();
             
             const plans = [];
