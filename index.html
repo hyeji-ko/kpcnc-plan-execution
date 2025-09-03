@@ -17,9 +17,7 @@
         // 라이브러리 로딩 상태 관리
         window.exportLibraries = {
             jsPDF: false,
-            XLSX: false,
-            saveAs: false,
-            docx: false
+            saveAs: false
         };
 
         // 라이브러리 로딩 완료 체크
@@ -31,15 +29,7 @@
                 window.exportLibraries.jsPDF = true;
                 console.log('✅ jsPDF 로드 완료');
                 updateLibraryStatus('jsPDFStatus', true);
-                updateExportButtonStatus('pdfStatus', 'jsPDF 준비완료', 'bg-green-700');
-            }
-            
-            // XLSX 확인
-            if (window.XLSX) {
-                window.exportLibraries.XLSX = true;
-                console.log('✅ XLSX 로드 완료');
-                updateLibraryStatus('XLSXStatus', true);
-                updateExportButtonStatus('excelStatus', '준비완료', 'bg-green-700');
+                updateExportButtonStatus('pdfStatus', '준비완료', 'bg-green-700');
             }
             
             // saveAs 확인
@@ -48,8 +38,6 @@
                 console.log('✅ saveAs 로드 완료');
                 updateLibraryStatus('saveAsStatus', true);
             }
-            
-
             
             console.log('📊 최종 라이브러리 상태:', window.exportLibraries);
         }
@@ -271,7 +259,7 @@
                 </button>
             </div>
             
-            <!-- 라이브러리 표시 -->
+            <!-- 라이브러리 상태 표시 -->
             <div class="mt-4 p-4 bg-gray-50 rounded-lg">
                 <div class="mt-2 text-xs text-gray-600">
                     <p>💡 PDF는 HTML to PDF 방식으로 한국어를 완벽 지원합니다.</p>
