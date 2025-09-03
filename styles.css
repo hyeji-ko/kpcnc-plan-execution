@@ -259,29 +259,29 @@
 /* Time Schedule Table Column Widths */
 #timeTableBody tr td:nth-child(1), /* 구분 컬럼 */
 #timeTableBody tr th:nth-child(1) {
-    width: 80px !important;
-    min-width: 80px !important;
-    max-width: 100px !important;
-}
-
-#timeTableBody tr td:nth-child(2), /* 주요 내용 컬럼 */
-#timeTableBody tr th:nth-child(2) {
-    width: auto !important;
-    min-width: 200px !important;
-}
-
-#timeTableBody tr td:nth-child(3), /* 시간 컬럼 */
-#timeTableBody tr th:nth-child(3) {
     width: 100px !important;
     min-width: 100px !important;
     max-width: 120px !important;
 }
 
+#timeTableBody tr td:nth-child(2), /* 주요 내용 컬럼 */
+#timeTableBody tr th:nth-child(2) {
+    width: auto !important;
+    min-width: 300px !important;
+}
+
+#timeTableBody tr td:nth-child(3), /* 시간 컬럼 */
+#timeTableBody tr th:nth-child(3) {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 150px !important;
+}
+
 #timeTableBody tr td:nth-child(4), /* 담당 컬럼 */
 #timeTableBody tr th:nth-child(4) {
-    width: 120px !important;
-    min-width: 120px !important;
-    max-width: 150px !important;
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 180px !important;
 }
 
 #timeTableBody tr td:nth-child(5), /* 작업 컬럼 */
@@ -289,6 +289,20 @@
     width: 80px !important;
     min-width: 80px !important;
     max-width: 80px !important;
+}
+
+/* Time Schedule Table Additional Styling */
+#timeTableBody tr td {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    padding: 8px 12px !important;
+}
+
+#timeTableBody tr td:nth-child(2) { /* 주요 내용 컬럼만 줄바꿈 허용 */
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
 }
 
 /* Print styles */
