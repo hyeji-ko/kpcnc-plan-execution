@@ -1481,6 +1481,13 @@ class SeminarPlanningApp {
                         text: safeText(this.currentData.session) || '전사 신기술 세미나 실행계획',
                         style: 'header',
                         alignment: 'center',
+                        margin: [0, 0, 0, 10]
+                    },
+                    // 현재 일자
+                    {
+                        text: this.getCurrentDateString(),
+                        alignment: 'right',
+                        fontSize: 10,
                         margin: [0, 0, 0, 20]
                     },
                     
@@ -1923,6 +1930,7 @@ class SeminarPlanningApp {
 <body>
     <div class="header">
         <h1>${safeText(this.currentData.session)} 전사 신기술 세미나 실행계획 </h1>
+        <div style="text-align: right; margin-top: 10px; font-size: 12px;">${this.getCurrentDateString()}</div>
     </div>
     
     <div class="section">
@@ -2085,6 +2093,18 @@ class SeminarPlanningApp {
                 });
             }
         }
+    }
+
+    // 현재 일자를 반환하는 함수 (예: 2025. 7. 15(화))
+    getCurrentDateString() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1;
+        const day = today.getDate();
+        const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+        const weekday = weekdays[today.getDay()];
+        
+        return `${year}. ${month}. ${day}(${weekday})`;
     }
 
     // UTF-8 텍스트를 안전하게 처리하는 함수 (한국어/영어 모두 지원)
