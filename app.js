@@ -719,25 +719,10 @@ class SeminarPlanningApp {
             this.collectFormData();
             
             let result;
-            let isNewRegistration = false;
             
             if (this.currentDocumentId) {
-                // 기존 데이터와 비교하여 회차나 일시가 다르면 신규 등록
-                const existingData = await this.getExistingData();
-                if (existingData && 
-                    (existingData.session !== this.currentData.session || 
-                     existingData.datetime !== this.currentData.datetime)) {
-                    // 회차나 일시가 다르면 신규 등록
-                    isNewRegistration = true;
-                    this.currentDocumentId = null; // 기존 문서 ID 초기화
-                    result = await saveData(this.currentData);
-                    if (result.success && result.id) {
-                        this.currentDocumentId = result.id; // 새로 생성된 문서 ID 저장
-                    }
-                } else {
-                    // 기존 문서 업데이트
-                    result = await updateData(this.currentDocumentId, this.currentData);
-                }
+                // 기존 문서 업데이트 (회차와 일시가 동일하든 다르든 수정)
+                result = await updateData(this.currentDocumentId, this.currentData);
             } else {
                 // 새 문서 생성
                 result = await saveData(this.currentData);
@@ -747,10 +732,7 @@ class SeminarPlanningApp {
             }
             
             if (result.success) {
-                const message = isNewRegistration ? 
-                    '회차나 일시가 변경되어 새로운 세미나로 등록되었습니다.' : 
-                    result.message;
-                this.showSuccessToast(message);
+                this.showSuccessToast(result.message);
             } else {
                 this.showErrorToast(result.message);
             }
@@ -762,19 +744,7 @@ class SeminarPlanningApp {
         }
     }
 
-    // 기존 데이터 가져오기 (비교용)
-    async getExistingData() {
-        try {
-            if (this.currentDocumentId) {
-                const result = await loadData(this.currentDocumentId);
-                return result.success ? result.data : null;
-            }
-            return null;
-        } catch (error) {
-            console.error('기존 데이터 조회 오류:', error);
-            return null;
-        }
-    }
+
 
     async loadData() {
         try {
@@ -1280,42 +1250,19 @@ class SeminarPlanningApp {
         this.currentData.attendees = '';
     }
 
-    // 테이블의 입력 필드만 초기화
+    // 테이블 그리드 완전 삭제 (초기화)
     clearTableInputs() {
-        // 시간 계획 테이블 입력 필드 초기화
-        const timeRows = document.getElementById('timeTableBody').children;
-        Array.from(timeRows).forEach(row => {
-            const inputs = row.querySelectorAll('input, select, textarea');
-            if (inputs[0]) inputs[0].value = ''; // 구분
-            if (inputs[1]) {
-                inputs[1].value = ''; // 주요 내용
-                // textarea의 경우 textContent도 초기화
-                if (inputs[1].tagName === 'TEXTAREA') {
-                    inputs[1].textContent = '';
-                }
-            }
-            if (inputs[2]) inputs[2].value = ''; // 시간
-            if (inputs[3]) inputs[3].value = ''; // 담당
-        });
+        // 시간 계획 테이블 그리드 완전 삭제
+        const timeTableBody = document.getElementById('timeTableBody');
+        timeTableBody.innerHTML = '';
         
-        // 참석자 테이블 입력 필드 초기화
-        const attendeeRows = document.getElementById('attendeeTableBody').children;
-        Array.from(attendeeRows).forEach(row => {
-            const inputs = row.querySelectorAll('input');
-            const select = row.querySelector('select');
-            
-            if (inputs[0]) inputs[0].value = ''; // 성명
-            if (inputs[1]) inputs[1].value = ''; // 직급
-            if (select) {
-                select.value = '';
-                select.style.display = 'block';
-            }
-            if (inputs[2]) {
-                inputs[2].value = '';
-                inputs[2].classList.add('hidden');
-            }
-            if (inputs[3]) inputs[3].value = ''; // 업무
-        });
+        // 참석자 테이블 그리드 완전 삭제
+        const attendeeTableBody = document.getElementById('attendeeTableBody');
+        attendeeTableBody.innerHTML = '';
+        
+        // 현재 데이터의 테이블 데이터도 초기화
+        this.currentData.timeSchedule = [];
+        this.currentData.attendeeList = [];
     }
 
     // 모바일 호환성을 위한 헬퍼 메서드들
