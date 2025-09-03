@@ -546,7 +546,7 @@ class SeminarPlanningApp {
             tbody.appendChild(row);
             
             // 데이터 채우기 (모바일 환경 고려)
-            const inputs = row.querySelectorAll('input, select');
+            const inputs = row.querySelectorAll('input, select, textarea');
             if (inputs[0]) {
                 inputs[0].value = item.type || '';
                 // 모바일에서 select 값이 제대로 설정되도록 강제 업데이트
@@ -556,8 +556,12 @@ class SeminarPlanningApp {
             }
             if (inputs[1]) {
                 inputs[1].value = item.content || '';
-                // 모바일에서 input 값이 제대로 설정되도록 강제 업데이트
-                inputs[1].setAttribute('value', item.content || '');
+                // textarea의 경우 value 속성 설정
+                if (inputs[1].tagName === 'TEXTAREA') {
+                    inputs[1].textContent = item.content || '';
+                } else {
+                    inputs[1].setAttribute('value', item.content || '');
+                }
             }
             if (inputs[2]) {
                 inputs[2].value = item.time || '';
@@ -575,7 +579,7 @@ class SeminarPlanningApp {
     
     // 시간 계획 행 이벤트 바인딩 (모바일 환경 고려)
     bindTimeRowEvents(row, index) {
-        const inputs = row.querySelectorAll('input, select');
+        const inputs = row.querySelectorAll('input, select, textarea');
         inputs.forEach(input => {
             // 모바일에서 input 이벤트가 제대로 작동하도록 여러 이벤트 리스너 추가
             input.addEventListener('input', (e) => {
@@ -774,7 +778,7 @@ class SeminarPlanningApp {
         this.currentData.timeSchedule = [];
         
         Array.from(timeRows).forEach(row => {
-            const inputs = row.querySelectorAll('input, select');
+            const inputs = row.querySelectorAll('input, select, textarea');
             this.currentData.timeSchedule.push({
                 type: inputs[0]?.value || '',
                 content: inputs[1]?.value || '',
