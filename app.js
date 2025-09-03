@@ -1538,8 +1538,9 @@ class SeminarPlanningApp {
                             widths: ['*', '*', '*', '*'],
                             body: timeScheduleRows
                         },
-                        margin: [0, 0, 0, 20]
-                    }
+                        margin: [0, 0, 0, 10]
+                    },
+                    { text: '- 이 상 –', alignment: 'right', fontSize: 10, margin: [0, 0, 0, 20] }
                 );
             }
 
@@ -1566,6 +1567,7 @@ class SeminarPlanningApp {
                 });
 
                 docDefinition.content.push(
+                    { text: '', pageBreak: 'before' },
                     { text: '[별첨] 세미나 참석 명단', style: 'sectionHeader', margin: [0, 20, 0, 10] },
                     {
                         table: {
@@ -1945,6 +1947,7 @@ class SeminarPlanningApp {
             html += `
             </tbody>
         </table>
+        <div style="text-align: right; margin-top: 10px; font-size: 12px;">- 이 상 –</div>
     </div>
 `;
             }
@@ -1952,7 +1955,7 @@ class SeminarPlanningApp {
             // 참석자 명단 테이블
         if (this.currentData.attendeeList && this.currentData.attendeeList.length > 0) {
             html += `
-    <div class="section">
+    <div class="section" style="page-break-before: always;">
         <h2>[별첨] 세미나 참석 명단</h2>
         <table class="attendee-table">
             <thead>
