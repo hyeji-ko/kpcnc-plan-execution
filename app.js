@@ -141,8 +141,6 @@ class SeminarPlanningApp {
         
         // 내보내기 버튼들
         document.getElementById('exportPDF').addEventListener('click', () => this.exportToPDF());
-        document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
-
         
         // 입력 필드 변경 감지
         this.bindInputEvents();
@@ -2185,3 +2183,4 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // 전역 함수로 노출 (HTML에서 호출하기 위해)
 window.app = app;
+
