@@ -1522,13 +1522,23 @@ class SeminarPlanningApp {
                     ]
                 ];
 
-                this.currentData.timeSchedule.forEach(item => {
-                    timeScheduleRows.push([
+                // 구분 값 병합 처리를 위한 데이터 준비
+                const processedSchedule = this.processTimeScheduleForMerging(this.currentData.timeSchedule);
+
+                processedSchedule.forEach((item, index) => {
+                    const row = [
                         { text: safeText(item.type) || '', style: 'tableCell' },
                         { text: formatContentForPDF(safeText(item.content)) || '', style: 'tableCell' },
                         { text: safeText(item.time) || '', style: 'tableCell' },
                         { text: safeText(item.responsible) || '', style: 'tableCell' }
-                    ]);
+                    ];
+
+                    // 병합이 필요한 경우 rowspan 설정
+                    if (item.rowspan && item.rowspan > 1) {
+                        row[0].rowSpan = item.rowspan;
+                    }
+
+                    timeScheduleRows.push(row);
                 });
 
                 docDefinition.content.push(
@@ -1939,10 +1949,17 @@ class SeminarPlanningApp {
             </thead>
             <tbody>
 `;
-            this.currentData.timeSchedule.forEach(item => {
+            // 구분 값 병합 처리를 위한 데이터 준비
+            const processedSchedule = this.processTimeScheduleForMerging(this.currentData.timeSchedule);
+            
+            processedSchedule.forEach((item, index) => {
+                const typeCell = item.rowspan && item.rowspan > 1 ? 
+                    `<td class="center-align" rowspan="${item.rowspan}">${safeText(item.type)}</td>` :
+                    `<td class="center-align">${safeText(item.type)}</td>`;
+                
                 html += `
                 <tr>
-                    <td class="center-align">${safeText(item.type)}</td>
+                    ${typeCell}
                     <td>${formatContentHTML(safeText(item.content))}</td>
                     <td class="center-align">${safeText(item.time)}</td>
                     <td class="center-align">${safeText(item.responsible)}</td>
@@ -1952,7 +1969,7 @@ class SeminarPlanningApp {
             html += `
             </tbody>
         </table>
-        <div style="text-align: right; margin-top: 10px; font-size: 12px;">- 이 상 –</div>
+        <div style="text-align: right; margin-top: 10px; font-size: 12px;">– 이 상 –</div>
     </div>
 `;
             }
@@ -1998,6 +2015,54 @@ class SeminarPlanningApp {
 `;
 
         return html;
+    }
+
+    // 시간 계획 데이터를 병합 처리하는 함수
+    processTimeScheduleForMerging(timeSchedule) {
+        if (!timeSchedule || timeSchedule.length === 0) return [];
+        
+        const processed = [];
+        let currentType = null;
+        let currentGroup = [];
+        
+        timeSchedule.forEach((item, index) => {
+            const itemType = item.type || '';
+            
+            if (itemType === currentType && currentType !== '') {
+                // 같은 구분 값이면 그룹에 추가
+                currentGroup.push(item);
+            } else {
+                // 다른 구분 값이면 이전 그룹 처리 후 새 그룹 시작
+                if (currentGroup.length > 0) {
+                    this.addMergedGroupToProcessed(processed, currentGroup);
+                }
+                currentGroup = [item];
+                currentType = itemType;
+            }
+        });
+        
+        // 마지막 그룹 처리
+        if (currentGroup.length > 0) {
+            this.addMergedGroupToProcessed(processed, currentGroup);
+        }
+        
+        return processed;
+    }
+    
+    // 병합된 그룹을 처리된 배열에 추가하는 함수
+    addMergedGroupToProcessed(processed, group) {
+        if (group.length === 1) {
+            // 그룹에 항목이 하나면 병합하지 않음
+            processed.push({ ...group[0], rowspan: 1 });
+        } else {
+            // 그룹에 항목이 여러 개면 첫 번째 항목에 rowspan 설정
+            processed.push({ ...group[0], rowspan: group.length });
+            
+            // 나머지 항목들은 구분 컬럼을 빈 값으로 설정
+            for (let i = 1; i < group.length; i++) {
+                processed.push({ ...group[i], type: '', rowspan: 1 });
+            }
+        }
     }
 
     // UTF-8 텍스트를 안전하게 처리하는 함수 (한국어/영어 모두 지원)
