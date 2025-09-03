@@ -199,9 +199,10 @@ class SeminarPlanningApp {
                     </select>
                 </td>
                 <td class="px-4 py-3 border-b">
-                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                           placeholder="주요 내용을 입력하세요" 
-                           data-index="0" data-field="content">
+                    <textarea class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                              placeholder="주요 내용을 입력하세요 (엔터로 줄바꿈)" 
+                              rows="2"
+                              data-index="0" data-field="content"></textarea>
                 </td>
                 <td class="px-4 py-3 border-b">
                     <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
@@ -309,9 +310,10 @@ class SeminarPlanningApp {
                 </select>
             </td>
             <td class="px-4 py-3 border-b">
-                <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                       placeholder="주요 내용을 입력하세요" 
-                       data-index="${rowCount}" data-field="content">
+                <textarea class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                          placeholder="주요 내용을 입력하세요 (엔터로 줄바꿈)" 
+                          rows="2"
+                          data-index="${rowCount}" data-field="content"></textarea>
             </td>
             <td class="px-4 py-3 border-b">
                 <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
@@ -519,9 +521,10 @@ class SeminarPlanningApp {
                     </select>
                 </td>
                 <td class="px-4 py-3 border-b">
-                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                           placeholder="주요 내용을 입력하세요" 
-                           data-index="${index}" data-field="content">
+                    <textarea class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                              placeholder="주요 내용을 입력하세요 (엔터로 줄바꿈)" 
+                              rows="2"
+                              data-index="${index}" data-field="content"></textarea>
                 </td>
                 <td class="px-4 py-3 border-b">
                     <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
