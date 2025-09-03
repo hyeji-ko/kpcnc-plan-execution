@@ -1463,6 +1463,14 @@ class SeminarPlanningApp {
                 defaultStyle: {
                     fontSize: 10
                 },
+                footer: function(currentPage, pageCount) {
+                    return {
+                        text: `- ${currentPage} -`,
+                        alignment: 'center',
+                        fontSize: 10,
+                        margin: [0, 10, 0, 0]
+                    };
+                },
                 content: [
                     // 제목
                     {
@@ -1760,16 +1768,23 @@ class SeminarPlanningApp {
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title> </title>
+    <title>전사 신기술 세미나 실행계획</title>
     <meta name="author" content="(주)경포씨엔씨">
     <meta name="description" content="전사 신기술 세미나 실행계획서">
     <meta name="keywords" content="세미나, 실행계획, KPCNC">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="generator" content="">
     <style>
         @page {
             size: A4;
             margin: 2cm;
             @top-center {
                 content: " ";
+            }
+            @bottom-center {
+                content: "- " counter(page) " -";
+                font-size: 10px;
+                margin-top: 10px;
             }
         }
         * {
