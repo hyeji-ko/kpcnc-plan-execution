@@ -266,14 +266,9 @@
             
             <div class="flex flex-wrap gap-4">
                 <button id="exportPDF" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
-                    <i class="fas fa-file-pdf mr-2"></i>PDF 내보내기
+                    <i class="fas fa-file-pdf mr-pdfStatus2"></i>PDF 내보내기
                     <span id="pdfStatus" class="ml-2 text-xs bg-red-700 px-2 py-1 rounded-full">준비완료</span>
                 </button>
-                <button id="exportExcel" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center">
-                    <i class="fas fa-file-excel mr-2"></i>Excel 내보내기
-                    <span id="excelStatus" class="ml-2 text-xs bg-green-700 px-2 py-1 rounded-full">준비중</span>
-                </button>
-
             </div>
             
             <!-- 라이브러리 상태 표시 -->
@@ -282,15 +277,7 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
                     <div class="flex items-center space-x-2">
                         <span id="jsPDFStatus" class="w-2 h-2 bg-gray-400 rounded-full"></span>
-                        <span>jsPDF</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span id="XLSXStatus" class="w-2 h-2 bg-gray-400 rounded-full"></span>
-                        <span>Excel 생성</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span id="saveAsStatus" class="w-2 h-2 bg-gray-400 rounded-full"></span>
-                        <span>파일 저장</span>
+                        <span></span>
                     </div>
                 </div>
                 <div class="mt-2 text-xs text-gray-600">
