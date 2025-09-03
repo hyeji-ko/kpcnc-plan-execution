@@ -1435,6 +1435,27 @@ class SeminarPlanningApp {
                 return dateStr;
             };
             
+            // 주요 내용 형식 변환 함수 (PDFMake용)
+            const formatContentForPDF = (content) => {
+                if (!content) return '';
+                const text = String(content);
+                
+                // '- ' 문자를 기준으로 분할
+                const parts = text.split('- ');
+                if (parts.length <= 1) return text;
+                
+                let result = parts[0]; // 첫 번째 부분
+                
+                // 나머지 부분들을 다음 라인에 추가
+                for (let i = 1; i < parts.length; i++) {
+                    if (parts[i].trim()) {
+                        result += '\n- ' + parts[i];
+                    }
+                }
+                
+                return result;
+            };
+            
             // PDF 문서 정의
             const docDefinition = {
                 pageSize: 'A4',
@@ -1496,7 +1517,7 @@ class SeminarPlanningApp {
                 this.currentData.timeSchedule.forEach(item => {
                     timeScheduleRows.push([
                         { text: safeText(item.type) || '', style: 'tableCell' },
-                        { text: safeText(item.content) || '', style: 'tableCell' },
+                        { text: formatContentForPDF(safeText(item.content)) || '', style: 'tableCell' },
                         { text: safeText(item.time) || '', style: 'tableCell' },
                         { text: safeText(item.responsible) || '', style: 'tableCell' }
                     ]);
@@ -1552,7 +1573,7 @@ class SeminarPlanningApp {
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
-            const fileName = `세미나_실행계획_${year}${month}${day}.pdf`;
+            const fileName = `${year}${month}${day} 전사 신기술 세미나 실행계획.pdf`;
 
             // PDF 생성 및 다운로드
             try {
@@ -1706,6 +1727,27 @@ class SeminarPlanningApp {
                 }
                 if (i !=1 && parts[i].trim()) {
                     result += '<br>&nbsp;&nbsp;&nbsp;&nbsp;□ ' + parts[i]; // 4칸 들여쓰기
+                }
+            }
+            
+            return result;
+        };
+        
+        // 주요 내용 형식 변환 함수 (HTML용)
+        const formatContentHTML = (content) => {
+            if (!content) return '';
+            const text = String(content);
+            
+            // '- ' 문자를 기준으로 분할
+            const parts = text.split('- ');
+            if (parts.length <= 1) return text;
+            
+            let result = parts[0]; // 첫 번째 부분
+            
+            // 나머지 부분들을 다음 라인에 추가
+            for (let i = 1; i < parts.length; i++) {
+                if (parts[i].trim()) {
+                    result += '<br>- ' + parts[i];
                 }
             }
             
@@ -1879,7 +1921,7 @@ class SeminarPlanningApp {
                 html += `
                 <tr>
                     <td class="center-align">${safeText(item.type)}</td>
-                    <td>${safeText(item.content)}</td>
+                    <td>${formatContentHTML(safeText(item.content))}</td>
                     <td class="center-align">${safeText(item.time)}</td>
                     <td class="center-align">${safeText(item.responsible)}</td>
                 </tr>
