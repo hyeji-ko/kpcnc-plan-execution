@@ -135,7 +135,7 @@ class SeminarPlanningApp {
 
     bindInputEvents() {
         // 기본 정보 입력 필드들
-        const basicFields = ['objective', 'datetime', 'location', 'attendees'];
+        const basicFields = ['objective', 'location', 'attendees'];
         basicFields.forEach(field => {
             const element = document.getElementById(field);
             if (element) {
@@ -144,6 +144,49 @@ class SeminarPlanningApp {
                 });
             }
         });
+        
+        // 일시 필드에 대한 특별한 처리
+        const datetimeElement = document.getElementById('datetime');
+        if (datetimeElement) {
+            datetimeElement.addEventListener('input', (e) => {
+                this.currentData.datetime = e.target.value;
+                this.validateDateTimeFormat(e.target);
+            });
+            
+            datetimeElement.addEventListener('blur', (e) => {
+                this.validateDateTimeFormat(e.target);
+            });
+        }
+    }
+    
+    // 일시 형식 검증
+    validateDateTimeFormat(element) {
+        const value = element.value.trim();
+        if (!value) {
+            element.classList.remove('border-red-500', 'border-green-500');
+            element.classList.add('border-gray-300');
+            return;
+        }
+        
+        // 다양한 날짜 형식 지원
+        const datePatterns = [
+            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/,  // 2025-08-10T14:00
+            /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/,  // 2025-08-10 14:00
+            /^\d{4}-\d{2}-\d{2}$/,              // 2025-08-10
+            /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}$/, // 2025/08/10 14:00
+            /^\d{4}\/\d{2}\/\d{2}$/             // 2025/08/10
+        ];
+        
+        const isValidFormat = datePatterns.some(pattern => pattern.test(value));
+        const isValidDate = !isNaN(new Date(value).getTime());
+        
+        if (isValidFormat && isValidDate) {
+            element.classList.remove('border-red-500');
+            element.classList.add('border-green-500');
+        } else {
+            element.classList.remove('border-green-500');
+            element.classList.add('border-red-500');
+        }
     }
 
     async loadInitialData() {
@@ -1091,7 +1134,7 @@ class SeminarPlanningApp {
             
             // 모바일 호환성을 위한 데이터 처리
             const session = this.ensureStringValue(item.session) || '미입력';
-            const datetime = item.datetime ? this.formatDateTime(item.datetime) : '미입력';
+            const datetime = this.ensureStringValue(item.datetime) || '미입력';
             const objective = this.ensureStringValue(item.objective) || '미입력';
             const location = this.ensureStringValue(item.location) || '미입력';
             const attendees = this.ensureStringValue(item.attendees) || '미입력';
@@ -1470,27 +1513,6 @@ class SeminarPlanningApp {
         return String(value);
     }
     
-    // 날짜 시간 포맷팅 (모바일 호환)
-    formatDateTime(dateString) {
-        try {
-            if (!dateString) return '미입력';
-            
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '미입력';
-            
-            // 모바일에서 안전한 날짜 포맷팅
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            
-            return `${year}-${month}-${day} ${hours}:${minutes}`;
-        } catch (error) {
-            console.warn('날짜 포맷팅 오류:', error);
-            return '미입력';
-        }
-    }
     
     // HTML 이스케이프 (XSS 방지 및 모바일 호환)
     escapeHtml(text) {
@@ -1615,21 +1637,9 @@ class SeminarPlanningApp {
                 return String(text).replace(/[\x00-\x1F\x7F-\x9F]/g, '').trim();
             };
             
-            // 일시 형식 변환 함수 (T를 공백으로 변경하고 요일 추가)
+            // 일시 텍스트 그대로 사용
             const formatDateTime = (dateTime) => {
-                if (!dateTime) return '';
-                const dateStr = String(dateTime).replace('T', ' ');
-                
-                // 날짜 부분에서 요일 추출
-                const dateMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
-                if (dateMatch) {
-                    const date = new Date(dateMatch[1]);
-                    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-                    const weekday = weekdays[date.getDay()];
-                    return dateStr.replace(/^(\d{4}-\d{2}-\d{2})/, `$1 (${weekday})`);
-                }
-                
-                return dateStr;
+                return dateTime || '';
             };
             
             // 주요 내용 형식 변환 함수 (PDFMake용)
@@ -1916,21 +1926,9 @@ class SeminarPlanningApp {
             return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         };
         
-        // 일시 형식 변환 함수 (T를 공백으로 변경하고 요일 추가)
+        // 일시 텍스트 그대로 사용
         const formatDateTime = (dateTime) => {
-            if (!dateTime) return '';
-            const dateStr = String(dateTime).replace('T', ' ');
-            
-            // 날짜 부분에서 요일 추출
-            const dateMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
-            if (dateMatch) {
-                const date = new Date(dateMatch[1]);
-                const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-                const weekday = weekdays[date.getDay()];
-                return dateStr.replace(/^(\d{4}-\d{2}-\d{2})/, `$1 (${weekday})`);
-            }
-            
-            return dateStr;
+            return dateTime || '';
         };
         
         // 목표 필드에서 □ 문자를 만나면 다음 라인으로 처리하는 함수 (HTML용)
