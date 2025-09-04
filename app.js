@@ -2908,12 +2908,32 @@ class SeminarPlanningApp {
                     continue;
                 }
                 
-                seminarData.attendeeList.push({
-                    name: row[1] ? String(row[1]).trim() : '',
-                    position: row[2] ? String(row[2]).trim() : '',
-                    department: row[3] ? String(row[3]).trim() : '',
-                    work: row[4] ? String(row[4]).trim() : ''
-                });
+                // No 컬럼이 있는 경우와 없는 경우 모두 처리
+                let nameIndex = 1, positionIndex = 2, departmentIndex = 3, workIndex = 4;
+                
+                // 첫 번째 컬럼이 숫자인 경우 (No 컬럼이 있는 경우)
+                if (!isNaN(parseInt(firstCell))) {
+                    nameIndex = 1;
+                    positionIndex = 2;
+                    departmentIndex = 3;
+                    workIndex = 4;
+                } else {
+                    // 첫 번째 컬럼이 이름인 경우 (No 컬럼이 없는 경우)
+                    nameIndex = 0;
+                    positionIndex = 1;
+                    departmentIndex = 2;
+                    workIndex = 3;
+                }
+                
+                const attendee = {
+                    name: row[nameIndex] ? String(row[nameIndex]).trim() : '',
+                    position: row[positionIndex] ? String(row[positionIndex]).trim() : '',
+                    department: row[departmentIndex] ? String(row[departmentIndex]).trim() : '',
+                    work: row[workIndex] ? String(row[workIndex]).trim() : ''
+                };
+                
+                console.log('👥 참석자 파싱 (단일):', attendee, '행 번호:', i);
+                seminarData.attendeeList.push(attendee);
             }
         }
         
@@ -3026,12 +3046,32 @@ class SeminarPlanningApp {
                     continue;
                 }
                 
-                currentSeminar.attendeeList.push({
-                    name: row[1] ? String(row[1]).trim() : '',
-                    position: row[2] ? String(row[2]).trim() : '',
-                    department: row[3] ? String(row[3]).trim() : '',
-                    work: row[4] ? String(row[4]).trim() : ''
-                });
+                // No 컬럼이 있는 경우와 없는 경우 모두 처리
+                let nameIndex = 1, positionIndex = 2, departmentIndex = 3, workIndex = 4;
+                
+                // 첫 번째 컬럼이 숫자인 경우 (No 컬럼이 있는 경우)
+                if (!isNaN(parseInt(firstCell))) {
+                    nameIndex = 1;
+                    positionIndex = 2;
+                    departmentIndex = 3;
+                    workIndex = 4;
+                } else {
+                    // 첫 번째 컬럼이 이름인 경우 (No 컬럼이 없는 경우)
+                    nameIndex = 0;
+                    positionIndex = 1;
+                    departmentIndex = 2;
+                    workIndex = 3;
+                }
+                
+                const attendee = {
+                    name: row[nameIndex] ? String(row[nameIndex]).trim() : '',
+                    position: row[positionIndex] ? String(row[positionIndex]).trim() : '',
+                    department: row[departmentIndex] ? String(row[departmentIndex]).trim() : '',
+                    work: row[workIndex] ? String(row[workIndex]).trim() : ''
+                };
+                
+                console.log('👥 참석자 파싱:', attendee, '행 번호:', i);
+                currentSeminar.attendeeList.push(attendee);
             }
         }
         
