@@ -327,11 +327,11 @@ class SeminarPlanningApp {
                     <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                             data-index="0" data-field="work">
                         <option value="">선택하세요</option>
+                        option value="본부장">본부장</option>
                         <option value="담당임원">담당임원</option>
-                        <option value="본부장">본부장</option>
-                        <option value="기술지원팀장">기술지원팀장</option>
                         <option value="담당간부">담당간부</option>
                         <option value="담당자">담당자</option>
+                        <option value="기술지원팀장">기술지원팀장</option>
                         <option value="영업대표">영업대표</option>
                         <option value="프레임워크사업팀">프레임워크사업팀</option>
                         <option value="SK증권 SM">SK증권 SM</option>
@@ -467,11 +467,11 @@ class SeminarPlanningApp {
                 <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                         data-field="work">
                     <option value="">선택하세요</option>
-                    <option value="담당임원">담당임원</option>
                     <option value="본부장">본부장</option>
-                    <option value="기술지원팀장">기술지원팀장</option>
+                    <option value="담당임원">담당임원</option>
                     <option value="담당간부">담당간부</option>
                     <option value="담당자">담당자</option>
+                    <option value="기술지원팀장">기술지원팀장</option>
                     <option value="영업대표">영업대표</option>
                     <option value="프레임워크사업팀">프레임워크사업팀</option>
                     <option value="SK증권 SM">SK증권 SM</option>
@@ -833,11 +833,11 @@ class SeminarPlanningApp {
                             data-field="work"
                             onchange="app.updateAttendeeList(${index}, 'work', this.value); app.toggleCustomWorkInput(${index}, this.value)">
                         <option value="">선택하세요</option>
-                        <option value="담당임원">담당임원</option>
                         <option value="본부장">본부장</option>
-                        <option value="기술지원팀장">기술지원팀장</option>
+                        <option value="담당임원">담당임원</option>
                         <option value="담당간부">담당간부</option>
                         <option value="담당자">담당자</option>
+                        <option value="기술지원팀장">기술지원팀장</option>
                         <option value="영업대표">영업대표</option>
                         <option value="프레임워크사업팀">프레임워크사업팀</option>
                         <option value="SK증권 SM">SK증권 SM</option>
