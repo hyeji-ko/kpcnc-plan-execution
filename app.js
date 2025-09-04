@@ -2675,7 +2675,7 @@ class SeminarPlanningApp {
             // 파일 읽기
             const data = await this.readExcelFile(file);
             
-            if (data) {
+            if (data && Array.isArray(data)) {
                 console.log('📁 엑셀 파일 읽기 성공, 데이터 길이:', data.length);
                 console.log('📊 원본 데이터 (처음 10행):', data.slice(0, 10));
                 
@@ -2687,8 +2687,33 @@ class SeminarPlanningApp {
                 // 단일 세미나가 유효한지 확인 (회차와 일시가 있는지)
                 if (singleSeminar.session && singleSeminar.datetime) {
                     console.log('✅ 단일 세미나 데이터로 인식');
+                    
+                    // 키값 기반으로 기존 데이터 확인 및 저장/수정
+                    const keyValue = `${singleSeminar.session}_${singleSeminar.datetime}`;
+                    const existingData = await this.findExistingDataByKey(keyValue);
+                    
+                    if (existingData) {
+                        // 기존 데이터가 있으면 수정
+                        console.log('📝 기존 데이터 수정:', existingData.id);
+                        if (useLocalStorage) {
+                            this.saveToLocalStorage(singleSeminar, existingData.id);
+                        } else {
+                            await updateData(existingData.id, singleSeminar);
+                        }
+                        this.showSuccessToast('기존 세미나 데이터가 수정되었습니다.');
+                    } else {
+                        // 기존 데이터가 없으면 새로 등록
+                        console.log('➕ 새로운 데이터 등록');
+                        if (useLocalStorage) {
+                            this.saveToLocalStorage(singleSeminar);
+                        } else {
+                            await saveData(singleSeminar);
+                        }
+                        this.showSuccessToast('새로운 세미나 데이터가 등록되었습니다.');
+                    }
+                    
+                    // 폼에 데이터 로드
                     this.loadDataFromExcel(singleSeminar);
-                    this.showSuccessToast('엑셀 파일이 성공적으로 업로드되었습니다.');
                 } else {
                     // 다중 세미나 형식으로 파싱 시도
                     console.log('🔄 다중 세미나 형식으로 파싱 시도');
@@ -2701,10 +2726,35 @@ class SeminarPlanningApp {
                         await this.saveMultipleSeminars(seminars);
                         this.showSuccessToast(`${seminars.length}개의 세미나 데이터가 성공적으로 업로드되었습니다.`);
                     } else if (seminars.length === 1) {
-                        // 단일 세미나 데이터인 경우 현재 폼에 로드
+                        // 단일 세미나 데이터인 경우 키값 기반으로 저장/수정
                         console.log('✅ 다중 파싱에서 단일 세미나 발견');
-                        this.loadDataFromExcel(seminars[0]);
-                        this.showSuccessToast('엑셀 파일이 성공적으로 업로드되었습니다.');
+                        
+                        const seminar = seminars[0];
+                        const keyValue = `${seminar.session}_${seminar.datetime}`;
+                        const existingData = await this.findExistingDataByKey(keyValue);
+                        
+                        if (existingData) {
+                            // 기존 데이터가 있으면 수정
+                            console.log('📝 기존 데이터 수정:', existingData.id);
+                            if (useLocalStorage) {
+                                this.saveToLocalStorage(seminar, existingData.id);
+                            } else {
+                                await updateData(existingData.id, seminar);
+                            }
+                            this.showSuccessToast('기존 세미나 데이터가 수정되었습니다.');
+                        } else {
+                            // 기존 데이터가 없으면 새로 등록
+                            console.log('➕ 새로운 데이터 등록');
+                            if (useLocalStorage) {
+                                this.saveToLocalStorage(seminar);
+                            } else {
+                                await saveData(seminar);
+                            }
+                            this.showSuccessToast('새로운 세미나 데이터가 등록되었습니다.');
+                        }
+                        
+                        // 폼에 데이터 로드
+                        this.loadDataFromExcel(seminar);
                     } else {
                         console.error('❌ 유효한 세미나 데이터를 찾을 수 없음');
                         console.error('❌ 단일 세미나 파싱 결과:', singleSeminar);
@@ -2712,6 +2762,9 @@ class SeminarPlanningApp {
                         this.showErrorToast('유효한 세미나 데이터를 찾을 수 없습니다. 파일 형식을 확인해주세요.');
                     }
                 }
+            } else if (data && !Array.isArray(data)) {
+                console.error('❌ 읽어온 데이터가 배열이 아님:', typeof data, data);
+                this.showErrorToast('엑셀 파일 형식이 올바르지 않습니다.');
             } else {
                 this.showErrorToast('엑셀 파일을 읽는데 실패했습니다.');
             }
@@ -2741,7 +2794,7 @@ class SeminarPlanningApp {
                     const worksheet = workbook.Sheets[firstSheetName];
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
-                    resolve(this.parseExcelData(jsonData));
+                    resolve(jsonData);
                 } catch (error) {
                     reject(error);
                 }
