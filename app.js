@@ -431,11 +431,11 @@ class SeminarPlanningApp {
             <td class="px-4 py-3 border-b">
                 <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                        placeholder="성명을 입력하세요" 
-                       data-index="${rowCount}" data-field="name">
+                       data-field="name">
             </td>
             <td class="px-4 py-3 border-b">
                 <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                        data-index="${rowCount}" data-field="position">
+                        data-field="position">
                     <option value="">선택하세요</option>
                     <option value="상무">상무</option>
                     <option value="선임">선임</option>
@@ -447,11 +447,11 @@ class SeminarPlanningApp {
                 </select>
                 <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
                        placeholder="직급을 직접 입력하세요" 
-                       data-index="${rowCount}" data-field="position-custom">
+                       data-field="position-custom">
             </td>
             <td class="px-4 py-3 border-b">
                 <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                        data-index="${rowCount}" data-field="department">
+                        data-field="department">
                     <option value="">선택하세요</option>
                     <option value="SI사업본부">SI사업본부</option>
                     <option value="AI사업본부">AI사업본부</option>
@@ -461,12 +461,11 @@ class SeminarPlanningApp {
                 </select>
                 <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
                        placeholder="소속을 직접 입력하세요" 
-                       data-index="${rowCount}" data-field="department"
-                       id="departmentInput_${rowCount}">
+                       data-field="department-custom">
             </td>
             <td class="px-4 py-3 border-b">
                 <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                        data-index="${rowCount}" data-field="work">
+                        data-field="work">
                     <option value="">선택하세요</option>
                     <option value="담당임원">담당임원</option>
                     <option value="본부장">본부장</option>
@@ -484,7 +483,7 @@ class SeminarPlanningApp {
                 </select>
                 <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
                        placeholder="업무를 직접 입력하세요" 
-                       data-index="${rowCount}" data-field="work-custom">
+                       data-field="work-custom">
             </td>
             <td class="px-4 py-3 border-b">
                 <button onclick="app.removeAttendeeRow(${rowCount})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
@@ -497,6 +496,22 @@ class SeminarPlanningApp {
         
         // 이벤트 리스너 추가 (모바일 환경 고려)
         this.bindAttendeeRowEvents(row, rowCount);
+        
+        // 직접입력 토글 이벤트 추가
+        const positionSelect = row.querySelector('select[data-field="position"]');
+        const workSelect = row.querySelector('select[data-field="work"]');
+        
+        if (positionSelect) {
+            positionSelect.addEventListener('change', (e) => {
+                this.toggleCustomPositionInput(rowCount, e.target.value);
+            });
+        }
+        
+        if (workSelect) {
+            workSelect.addEventListener('change', (e) => {
+                this.toggleCustomWorkInput(rowCount, e.target.value);
+            });
+        }
         
         // 데이터 구조에 새 행 추가
         this.currentData.attendeeList[rowCount] = {
@@ -728,15 +743,21 @@ class SeminarPlanningApp {
     bindAttendeeRowEvents(row, index) {
         const inputs = row.querySelectorAll('input, select');
         inputs.forEach(input => {
+            // 필드명 정규화 (직접입력 필드의 경우 -custom 제거)
+            let fieldName = input.dataset.field;
+            if (fieldName && fieldName.endsWith('-custom')) {
+                fieldName = fieldName.replace('-custom', '');
+            }
+            
             // 모바일에서 input 이벤트가 제대로 작동하도록 여러 이벤트 리스너 추가
             input.addEventListener('input', (e) => {
-                this.updateAttendeeList(index, input.dataset.field, e.target.value);
+                this.updateAttendeeList(index, fieldName, e.target.value);
             });
             input.addEventListener('change', (e) => {
-                this.updateAttendeeList(index, input.dataset.field, e.target.value);
+                this.updateAttendeeList(index, fieldName, e.target.value);
             });
             input.addEventListener('blur', (e) => {
-                this.updateAttendeeList(index, input.dataset.field, e.target.value);
+                this.updateAttendeeList(index, fieldName, e.target.value);
             });
         });
     }
@@ -754,10 +775,12 @@ class SeminarPlanningApp {
                 <td class="px-4 py-3 border-b">
                     <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                            placeholder="성명을 입력하세요" 
+                           data-field="name"
                            onchange="app.updateAttendeeList(${index}, 'name', this.value)">
                 </td>
                 <td class="px-4 py-3 border-b">
                     <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            data-field="position"
                             onchange="app.updateAttendeeList(${index}, 'position', this.value); app.toggleCustomPositionInput(${index}, this.value)">
                         <option value="">선택하세요</option>
                         <option value="상무">상무</option>
@@ -770,11 +793,12 @@ class SeminarPlanningApp {
                     </select>
                     <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
                            placeholder="직급을 직접 입력하세요" 
-                           onchange="app.updateAttendeeList(${index}, 'position', this.value)"
-                           data-index="${index}" data-field="position-custom">
+                           data-field="position-custom"
+                           onchange="app.updateAttendeeList(${index}, 'position', this.value)">
                 </td>
                 <td class="px-4 py-3 border-b">
                     <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            data-field="department"
                             onchange="app.updateAttendeeList(${index}, 'department', this.value)">
                         <option value="">선택하세요</option>
                         <option value="SI사업본부">SI사업본부</option>
@@ -785,11 +809,12 @@ class SeminarPlanningApp {
                     </select>
                     <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
                            placeholder="소속을 직접 입력하세요" 
-                           onchange="app.updateAttendeeList(${index}, 'department', this.value)"
-                           id="departmentInput_${index}">
+                           data-field="department-custom"
+                           onchange="app.updateAttendeeList(${index}, 'department', this.value)">
                 </td>
                 <td class="px-4 py-3 border-b">
                     <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            data-field="work"
                             onchange="app.updateAttendeeList(${index}, 'work', this.value); app.toggleCustomWorkInput(${index}, this.value)">
                         <option value="">선택하세요</option>
                         <option value="담당임원">담당임원</option>
@@ -808,8 +833,8 @@ class SeminarPlanningApp {
                     </select>
                     <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
                            placeholder="업무를 직접 입력하세요" 
-                           onchange="app.updateAttendeeList(${index}, 'work', this.value)"
-                           data-index="${index}" data-field="work-custom">
+                           data-field="work-custom"
+                           onchange="app.updateAttendeeList(${index}, 'work', this.value)">
                 </td>
                 <td class="px-4 py-3 border-b">
                     <button onclick="app.removeAttendeeRow(${index})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
@@ -899,6 +924,22 @@ class SeminarPlanningApp {
             
             // 이벤트 리스너 추가 (모바일 환경 고려)
             this.bindAttendeeRowEvents(row, index);
+            
+            // 직접입력 토글 이벤트 추가
+            const positionSelect = row.querySelector('select[data-field="position"]');
+            const workSelect = row.querySelector('select[data-field="work"]');
+            
+            if (positionSelect) {
+                positionSelect.addEventListener('change', (e) => {
+                    this.toggleCustomPositionInput(index, e.target.value);
+                });
+            }
+            
+            if (workSelect) {
+                workSelect.addEventListener('change', (e) => {
+                    this.toggleCustomWorkInput(index, e.target.value);
+                });
+            }
         });
     }
 
