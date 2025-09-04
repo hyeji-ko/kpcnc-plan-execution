@@ -2676,19 +2676,36 @@ class SeminarPlanningApp {
             const data = await this.readExcelFile(file);
             
             if (data) {
-                // 여러 세미나 데이터인지 확인
-                const seminars = this.parseMultipleExcelData(data);
+                console.log('📁 엑셀 파일 읽기 성공, 데이터 길이:', data.length);
                 
-                if (seminars.length > 1) {
-                    // 여러 세미나 데이터인 경우 일괄 저장
-                    await this.saveMultipleSeminars(seminars);
-                    this.showSuccessToast(`${seminars.length}개의 세미나 데이터가 성공적으로 업로드되었습니다.`);
-                } else if (seminars.length === 1) {
-                    // 단일 세미나 데이터인 경우 현재 폼에 로드
-                    this.loadDataFromExcel(seminars[0]);
+                // 먼저 단일 세미나 형식으로 파싱 시도
+                const singleSeminar = this.parseExcelData(data);
+                console.log('📊 단일 세미나 파싱 결과:', singleSeminar);
+                
+                // 단일 세미나가 유효한지 확인 (회차와 일시가 있는지)
+                if (singleSeminar.session && singleSeminar.datetime) {
+                    console.log('✅ 단일 세미나 데이터로 인식');
+                    this.loadDataFromExcel(singleSeminar);
                     this.showSuccessToast('엑셀 파일이 성공적으로 업로드되었습니다.');
                 } else {
-                    this.showErrorToast('유효한 세미나 데이터를 찾을 수 없습니다.');
+                    // 다중 세미나 형식으로 파싱 시도
+                    console.log('🔄 다중 세미나 형식으로 파싱 시도');
+                    const seminars = this.parseMultipleExcelData(data);
+                    
+                    if (seminars.length > 1) {
+                        // 여러 세미나 데이터인 경우 일괄 저장
+                        console.log('✅ 다중 세미나 데이터로 인식, 일괄 저장');
+                        await this.saveMultipleSeminars(seminars);
+                        this.showSuccessToast(`${seminars.length}개의 세미나 데이터가 성공적으로 업로드되었습니다.`);
+                    } else if (seminars.length === 1) {
+                        // 단일 세미나 데이터인 경우 현재 폼에 로드
+                        console.log('✅ 다중 파싱에서 단일 세미나 발견');
+                        this.loadDataFromExcel(seminars[0]);
+                        this.showSuccessToast('엑셀 파일이 성공적으로 업로드되었습니다.');
+                    } else {
+                        console.error('❌ 유효한 세미나 데이터를 찾을 수 없음');
+                        this.showErrorToast('유효한 세미나 데이터를 찾을 수 없습니다. 파일 형식을 확인해주세요.');
+                    }
                 }
             } else {
                 this.showErrorToast('엑셀 파일을 읽는데 실패했습니다.');
@@ -2833,11 +2850,13 @@ class SeminarPlanningApp {
     
     // 엑셀 데이터 파싱 (여러 세미나 - 업로드용)
     parseMultipleExcelData(data) {
+        console.log('📊 엑셀 데이터 파싱 시작, 총 행 수:', data.length);
         const seminars = [];
         let currentSeminar = null;
         let currentSection = '';
         let timeScheduleStart = false;
         let attendeeListStart = false;
+        let isFirstSeminar = true;
         
         for (let i = 0; i < data.length; i++) {
             const row = data[i];
@@ -2845,10 +2864,17 @@ class SeminarPlanningApp {
             
             const firstCell = row[0] ? String(row[0]).trim() : '';
             
+            // 디버깅을 위한 로그 (처음 20행만)
+            if (i < 20) {
+                console.log(`행 ${i}: "${firstCell}"`);
+            }
+            
             // 새로운 세미나 시작 (구분선 또는 헤더)
-            if (firstCell === '='.repeat(50) || firstCell === '전사 신기술 세미나 실행계획') {
+            if (firstCell === '='.repeat(50) || (firstCell === '전사 신기술 세미나 실행계획' && isFirstSeminar)) {
+                console.log('🆕 새로운 세미나 시작 감지:', firstCell);
                 if (currentSeminar && currentSeminar.session) {
                     seminars.push(currentSeminar);
+                    console.log('✅ 세미나 데이터 추가:', currentSeminar.session);
                 }
                 currentSeminar = {
                     session: '',
@@ -2862,6 +2888,7 @@ class SeminarPlanningApp {
                 currentSection = '';
                 timeScheduleStart = false;
                 attendeeListStart = false;
+                isFirstSeminar = false;
                 continue;
             }
             
@@ -2933,7 +2960,13 @@ class SeminarPlanningApp {
         // 마지막 세미나 추가
         if (currentSeminar && currentSeminar.session) {
             seminars.push(currentSeminar);
+            console.log('✅ 마지막 세미나 데이터 추가:', currentSeminar.session);
         }
+        
+        console.log('📊 파싱 완료, 총 세미나 수:', seminars.length);
+        seminars.forEach((seminar, index) => {
+            console.log(`세미나 ${index + 1}:`, seminar.session, seminar.datetime);
+        });
         
         return seminars;
     }
