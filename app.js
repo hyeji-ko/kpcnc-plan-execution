@@ -1162,7 +1162,7 @@ class SeminarPlanningApp {
         const attendeeRows = document.getElementById('attendeeTableBody').children;
         this.currentData.attendeeList = [];
         
-        Array.from(attendeeRows).forEach(row => {
+        Array.from(attendeeRows).forEach((row, index) => {
             // data-field 속성을 사용하여 정확한 요소 선택
             const nameInput = row.querySelector('input[data-field="name"]');
             const positionSelect = row.querySelector('select[data-field="position"]');
