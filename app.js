@@ -128,9 +128,7 @@ class SeminarPlanningApp {
         
         // 내보내기 버튼들
         document.getElementById('exportPDF').addEventListener('click', () => this.exportToPDF());
-        //document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
-        
-        
+             
         // 입력 필드 변경 감지
         this.bindInputEvents();
     }
