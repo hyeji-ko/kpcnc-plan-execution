@@ -821,12 +821,11 @@ class SeminarPlanningApp {
             tbody.appendChild(row);
             
             // 데이터 채우기 (모바일 환경 고려)
-            const inputs = row.querySelectorAll('input');
-            const select = row.querySelector('select');
+            const nameInput = row.querySelector('input[data-field="name"]');
             
-            if (inputs[0]) {
-                inputs[0].value = item.name || '';
-                inputs[0].setAttribute('value', item.name || '');
+            if (nameInput) {
+                nameInput.value = item.name || '';
+                nameInput.setAttribute('value', item.name || '');
             }
             
             // 직급 필드 처리
@@ -855,27 +854,22 @@ class SeminarPlanningApp {
             // 소속 필드 처리
             if (item.department) {
                 const departmentOptions = ['SI사업본부', 'AI사업본부', '경영관리본부', '전략사업본부'];
+                const departmentSelect = row.querySelector('select[data-field="department"]');
+                const departmentCustomInput = row.querySelector('input[data-field="department-custom"]');
+                
                 if (departmentOptions.includes(item.department)) {
                     // 미리 정의된 옵션인 경우
-                    if (select) {
-                        select.value = item.department;
-                        setTimeout(() => {
-                            select.value = item.department;
-                        }, 10);
+                    if (departmentSelect) {
+                        departmentSelect.value = item.department;
                     }
                 } else {
                     // 직접 입력된 값인 경우
-                    if (select) {
-                        select.value = '직접입력';
-                        select.style.display = 'none';
-                        setTimeout(() => {
-                            select.value = '직접입력';
-                        }, 10);
+                    if (departmentSelect) {
+                        departmentSelect.value = '직접입력';
                     }
-                    if (inputs[2]) {
-                        inputs[2].value = item.department;
-                        inputs[2].setAttribute('value', item.department);
-                        inputs[2].classList.remove('hidden');
+                    if (departmentCustomInput) {
+                        departmentCustomInput.value = item.department;
+                        departmentCustomInput.classList.remove('hidden');
                     }
                 }
             }
