@@ -2957,18 +2957,36 @@ class SeminarPlanningApp {
             
             const firstCell = row[0] ? String(row[0]).trim() : '';
             
-            // 디버깅을 위한 로그 (처음 50행만)
-            if (i < 50) {
+            // 디버깅을 위한 로그 (처음 100행만)
+            if (i < 100) {
                 console.log(`행 ${i}: "${firstCell}"`);
             }
             
             // 새로운 세미나 시작 (구분선 또는 헤더)
-            if (firstCell.startsWith('=') && firstCell.length >= 20 || firstCell === '전사 신기술 세미나 실행계획') {
-                console.log('🆕 새로운 세미나 시작 감지:', firstCell, '행 번호:', i);
+            const isSeparator = firstCell.startsWith('=') && firstCell.length >= 20;
+            const isHeader = firstCell === '전사 신기술 세미나 실행계획';
+            const isLongSeparator = firstCell.includes('=') && firstCell.length >= 30; // 더 긴 구분선도 감지
+            
+            // 구분선 감지 로그
+            if (firstCell.startsWith('=')) {
+                console.log(`🔍 구분선 후보 행 ${i}: "${firstCell}" (길이: ${firstCell.length})`);
+            }
+            
+            if (isSeparator || isHeader || isLongSeparator) {
+                console.log('🆕 새로운 세미나 시작 감지:', {
+                    firstCell: firstCell,
+                    rowNumber: i,
+                    isSeparator: isSeparator,
+                    isHeader: isHeader,
+                    isLongSeparator: isLongSeparator,
+                    currentSeminar: currentSeminar ? currentSeminar.session : 'null'
+                });
+                
                 if (currentSeminar && currentSeminar.session) {
                     seminars.push(currentSeminar);
                     console.log('✅ 세미나 데이터 추가:', currentSeminar.session, '총 세미나 수:', seminars.length);
                 }
+                
                 currentSeminar = {
                     session: '',
                     objective: '',
