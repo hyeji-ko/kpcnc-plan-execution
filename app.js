@@ -2937,17 +2937,17 @@ class SeminarPlanningApp {
             
             const firstCell = row[0] ? String(row[0]).trim() : '';
             
-            // 디버깅을 위한 로그 (처음 20행만)
-            if (i < 20) {
+            // 디버깅을 위한 로그 (처음 50행만)
+            if (i < 50) {
                 console.log(`행 ${i}: "${firstCell}"`);
             }
             
             // 새로운 세미나 시작 (구분선 또는 헤더)
-            if (firstCell === '='.repeat(50) || firstCell === '전사 신기술 세미나 실행계획') {
-                console.log('🆕 새로운 세미나 시작 감지:', firstCell);
+            if (firstCell.startsWith('=') && firstCell.length >= 20 || firstCell === '전사 신기술 세미나 실행계획') {
+                console.log('🆕 새로운 세미나 시작 감지:', firstCell, '행 번호:', i);
                 if (currentSeminar && currentSeminar.session) {
                     seminars.push(currentSeminar);
-                    console.log('✅ 세미나 데이터 추가:', currentSeminar.session);
+                    console.log('✅ 세미나 데이터 추가:', currentSeminar.session, '총 세미나 수:', seminars.length);
                 }
                 currentSeminar = {
                     session: '',
@@ -2986,14 +2986,19 @@ class SeminarPlanningApp {
             if (currentSection === 'basic') {
                 if (firstCell === '회차' && row[1]) {
                     currentSeminar.session = String(row[1]).trim();
+                    console.log('📋 회차 파싱:', currentSeminar.session, '행 번호:', i);
                 } else if (firstCell === '목표' && row[1]) {
                     currentSeminar.objective = String(row[1]).trim();
+                    console.log('📋 목표 파싱:', currentSeminar.objective, '행 번호:', i);
                 } else if (firstCell === '일시' && row[1]) {
                     currentSeminar.datetime = String(row[1]).trim();
+                    console.log('📋 일시 파싱:', currentSeminar.datetime, '행 번호:', i);
                 } else if (firstCell === '장소' && row[1]) {
                     currentSeminar.location = String(row[1]).trim();
+                    console.log('📋 장소 파싱:', currentSeminar.location, '행 번호:', i);
                 } else if (firstCell === '참석 대상' && row[1]) {
                     currentSeminar.attendees = String(row[1]).trim();
+                    console.log('📋 참석 대상 파싱:', currentSeminar.attendees, '행 번호:', i);
                 }
             }
             
@@ -3033,10 +3038,13 @@ class SeminarPlanningApp {
         // 마지막 세미나 추가
         if (currentSeminar && currentSeminar.session) {
             seminars.push(currentSeminar);
-            console.log('✅ 마지막 세미나 데이터 추가:', currentSeminar.session);
+            console.log('✅ 마지막 세미나 데이터 추가:', currentSeminar.session, '총 세미나 수:', seminars.length);
+        } else if (currentSeminar) {
+            console.log('⚠️ 마지막 세미나 데이터가 불완전함:', currentSeminar);
         }
         
         console.log('📊 파싱 완료, 총 세미나 수:', seminars.length);
+        console.log('📊 파싱된 세미나 목록:', seminars.map(s => ({ session: s.session, datetime: s.datetime })));
         seminars.forEach((seminar, index) => {
             console.log(`세미나 ${index + 1}:`, seminar.session, seminar.datetime);
         });
