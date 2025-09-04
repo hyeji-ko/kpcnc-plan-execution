@@ -917,7 +917,7 @@ class SeminarPlanningApp {
             
             // 업무 필드 처리
             if (item.work) {
-                const workOptions = ['담당임원', '본부장', '기술지원팀장', '담당간부', '담당자', '영업대표', '프레임워크사업팀', 'SK증권 SM', '라이나 생명 SM', '산업은행 SM', '삼성카드 SM', 'PM'];
+                const workOptions = ['본부장', '담당임원', '담당간부', '담당자', '기술지원팀장','영업대표', '프레임워크사업팀', 'SK증권 SM', '라이나 생명 SM', '산업은행 SM', '삼성카드 SM', 'PM'];
                 const workSelect = row.querySelector('select[data-field="work"]');
                 const workCustomInput = row.querySelector('input[data-field="work-custom"]');
                 
@@ -1163,22 +1163,44 @@ class SeminarPlanningApp {
         this.currentData.attendeeList = [];
         
         Array.from(attendeeRows).forEach(row => {
-            const inputs = row.querySelectorAll('input');
-            const select = row.querySelector('select');
+            // data-field 속성을 사용하여 정확한 요소 선택
+            const nameInput = row.querySelector('input[data-field="name"]');
+            const positionSelect = row.querySelector('select[data-field="position"]');
+            const positionCustomInput = row.querySelector('input[data-field="position-custom"]');
+            const departmentSelect = row.querySelector('select[data-field="department"]');
+            const departmentCustomInput = row.querySelector('input[data-field="department-custom"]');
+            const workSelect = row.querySelector('select[data-field="work"]');
+            const workCustomInput = row.querySelector('input[data-field="work-custom"]');
             
-            // 소속 데이터 수집 (select 또는 input에서)
+            // 직급 데이터 수집 (select 또는 custom input에서)
+            let position = '';
+            if (positionSelect && positionSelect.value && positionSelect.value !== '직접입력') {
+                position = positionSelect.value;
+            } else if (positionCustomInput && positionCustomInput.value) {
+                position = positionCustomInput.value;
+            }
+            
+            // 소속 데이터 수집 (select 또는 custom input에서)
             let department = '';
-            if (select && select.value && select.value !== '직접입력') {
-                department = select.value;
-            } else if (inputs[2] && inputs[2].value) {
-                department = inputs[2].value;
+            if (departmentSelect && departmentSelect.value && departmentSelect.value !== '직접입력') {
+                department = departmentSelect.value;
+            } else if (departmentCustomInput && departmentCustomInput.value) {
+                department = departmentCustomInput.value;
+            }
+            
+            // 업무 데이터 수집 (select 또는 custom input에서)
+            let work = '';
+            if (workSelect && workSelect.value && workSelect.value !== '직접입력') {
+                work = workSelect.value;
+            } else if (workCustomInput && workCustomInput.value) {
+                work = workCustomInput.value;
             }
             
             this.currentData.attendeeList.push({
-                name: inputs[0]?.value || '',
-                position: inputs[1]?.value || '',
+                name: nameInput?.value || '',
+                position: position,
                 department: department,
-                work: inputs[3]?.value || ''
+                work: work
             });
         });
     }
