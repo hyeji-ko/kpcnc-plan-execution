@@ -128,6 +128,11 @@ class SeminarPlanningApp {
         
         // 내보내기 버튼들
         document.getElementById('exportPDF').addEventListener('click', () => this.exportToPDF());
+        document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
+        
+        // 업로드 버튼
+        document.getElementById('uploadBtn').addEventListener('click', () => this.triggerFileUpload());
+        document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileUpload(e));
                 
         // 입력 필드 변경 감지
         this.bindInputEvents();
@@ -1221,7 +1226,11 @@ class SeminarPlanningApp {
             // 입력 필드만 초기화 (기존 데이터는 유지)
             this.clearInputFields();
             
-            this.showSuccessToast('모든 입력 필드가 초기화되었습니다.');
+            // 시간 계획과 참석자 명단에 1행씩 자동 추가
+            this.addTimeRow();
+            this.addAttendeeRow();
+            
+            this.showSuccessToast('모든 입력 필드가 초기화되고 기본 행이 추가되었습니다.');
         } catch (error) {
             console.error('폼 초기화 오류:', error);
             this.showErrorToast('초기화 중 오류가 발생했습니다.');
@@ -2251,6 +2260,323 @@ class SeminarPlanningApp {
         }
         
         return lines.length > 0 ? lines : [''];
+    }
+
+    // 엑셀 내보내기 (전체 데이터)
+    async exportToExcel() {
+        try {
+            this.showLoading(true);
+            
+            // 전체 데이터 조회
+            const result = await loadAllPlans();
+            
+            if (!result.success) {
+                this.showErrorToast('데이터를 불러오는데 실패했습니다.');
+                return;
+            }
+            
+            const allData = result.data;
+            
+            if (allData.length === 0) {
+                this.showErrorToast('내보낼 데이터가 없습니다.');
+                return;
+            }
+            
+            // 엑셀 워크북 생성
+            const wb = XLSX.utils.book_new();
+            
+            // 각 세미나 데이터를 시트로 추가
+            allData.forEach((seminar, index) => {
+                const sheetName = `세미나${index + 1}`;
+                const ws = this.createExcelSheet(seminar);
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            });
+            
+            // 전체 요약 시트 추가
+            const summarySheet = this.createSummarySheet(allData);
+            XLSX.utils.book_append_sheet(wb, summarySheet, '전체요약');
+            
+            // 파일명 생성
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const fileName = `${year}${month}${day}_전사신기술세미나_전체데이터.xlsx`;
+            
+            // 엑셀 파일 다운로드
+            XLSX.writeFile(wb, fileName);
+            
+            this.showSuccessToast('엑셀 파일이 성공적으로 다운로드되었습니다.');
+            
+        } catch (error) {
+            console.error('엑셀 내보내기 오류:', error);
+            this.showErrorToast(`엑셀 내보내기 실패: ${error.message}`);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+    
+    // 개별 세미나 데이터를 엑셀 시트로 변환
+    createExcelSheet(seminar) {
+        const data = [];
+        
+        // 헤더
+        data.push(['전사 신기술 세미나 실행계획']);
+        data.push([]);
+        
+        // 기본 정보
+        data.push(['1. 기본 정보']);
+        data.push(['회차', seminar.session || '']);
+        data.push(['목표', seminar.objective || '']);
+        data.push(['일시', seminar.datetime || '']);
+        data.push(['장소', seminar.location || '']);
+        data.push(['참석 대상', seminar.attendees || '']);
+        data.push([]);
+        
+        // 시간 계획
+        if (seminar.timeSchedule && seminar.timeSchedule.length > 0) {
+            data.push(['2. 시간 계획']);
+            data.push(['구분', '주요 내용', '시간', '담당']);
+            
+            seminar.timeSchedule.forEach(item => {
+                data.push([
+                    item.type || '',
+                    item.content || '',
+                    item.time || '',
+                    item.responsible || ''
+                ]);
+            });
+            data.push([]);
+        }
+        
+        // 참석자 명단
+        if (seminar.attendeeList && seminar.attendeeList.length > 0) {
+            data.push(['3. 참석자 명단']);
+            data.push(['No', '성명', '직급', '소속', '업무']);
+            
+            seminar.attendeeList.forEach((item, index) => {
+                data.push([
+                    index + 1,
+                    item.name || '',
+                    item.position || '',
+                    item.department || '',
+                    item.work || ''
+                ]);
+            });
+        }
+        
+        return XLSX.utils.aoa_to_sheet(data);
+    }
+    
+    // 전체 요약 시트 생성
+    createSummarySheet(allData) {
+        const data = [];
+        
+        // 헤더
+        data.push(['전사 신기술 세미나 전체 요약']);
+        data.push([]);
+        
+        // 요약 테이블 헤더
+        data.push(['회차', '일시', '목표', '장소', '참석 대상', '시간계획 수', '참석자 수']);
+        
+        // 각 세미나 요약 정보
+        allData.forEach(seminar => {
+            data.push([
+                seminar.session || '',
+                seminar.datetime || '',
+                seminar.objective || '',
+                seminar.location || '',
+                seminar.attendees || '',
+                seminar.timeSchedule ? seminar.timeSchedule.length : 0,
+                seminar.attendeeList ? seminar.attendeeList.length : 0
+            ]);
+        });
+        
+        return XLSX.utils.aoa_to_sheet(data);
+    }
+
+    // 파일 업로드 트리거
+    triggerFileUpload() {
+        const fileInput = document.getElementById('fileInput');
+        fileInput.click();
+    }
+
+    // 파일 업로드 처리
+    async handleFileUpload(event) {
+        const file = event.target.files[0];
+        
+        if (!file) {
+            return;
+        }
+        
+        // 파일 확장자 검증
+        const allowedExtensions = ['.xlsx', '.xls'];
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedExtensions.includes(fileExtension)) {
+            this.showErrorToast('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.');
+            return;
+        }
+        
+        try {
+            this.showLoading(true);
+            
+            // 파일 읽기
+            const data = await this.readExcelFile(file);
+            
+            if (data) {
+                // 데이터를 현재 폼에 로드
+                this.loadDataFromExcel(data);
+                this.showSuccessToast('엑셀 파일이 성공적으로 업로드되었습니다.');
+            } else {
+                this.showErrorToast('엑셀 파일을 읽는데 실패했습니다.');
+            }
+            
+        } catch (error) {
+            console.error('파일 업로드 오류:', error);
+            this.showErrorToast(`파일 업로드 실패: ${error.message}`);
+        } finally {
+            this.showLoading(false);
+            // 파일 입력 초기화
+            event.target.value = '';
+        }
+    }
+
+    // 엑셀 파일 읽기
+    readExcelFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // 첫 번째 시트의 데이터 읽기
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    resolve(this.parseExcelData(jsonData));
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            
+            reader.onerror = () => {
+                reject(new Error('파일 읽기 실패'));
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // 엑셀 데이터 파싱
+    parseExcelData(data) {
+        const seminarData = {
+            session: '',
+            objective: '',
+            datetime: '',
+            location: '',
+            attendees: '',
+            timeSchedule: [],
+            attendeeList: []
+        };
+        
+        let currentSection = '';
+        let timeScheduleStart = false;
+        let attendeeListStart = false;
+        
+        for (let i = 0; i < data.length; i++) {
+            const row = data[i];
+            if (!row || row.length === 0) continue;
+            
+            const firstCell = row[0] ? String(row[0]).trim() : '';
+            
+            // 섹션 구분
+            if (firstCell.includes('1. 기본 정보')) {
+                currentSection = 'basic';
+                continue;
+            } else if (firstCell.includes('2. 시간 계획')) {
+                currentSection = 'timeSchedule';
+                timeScheduleStart = true;
+                continue;
+            } else if (firstCell.includes('3. 참석자 명단')) {
+                currentSection = 'attendeeList';
+                attendeeListStart = true;
+                timeScheduleStart = false;
+                continue;
+            }
+            
+            // 기본 정보 파싱
+            if (currentSection === 'basic') {
+                if (firstCell === '회차' && row[1]) {
+                    seminarData.session = String(row[1]).trim();
+                } else if (firstCell === '목표' && row[1]) {
+                    seminarData.objective = String(row[1]).trim();
+                } else if (firstCell === '일시' && row[1]) {
+                    seminarData.datetime = String(row[1]).trim();
+                } else if (firstCell === '장소' && row[1]) {
+                    seminarData.location = String(row[1]).trim();
+                } else if (firstCell === '참석 대상' && row[1]) {
+                    seminarData.attendees = String(row[1]).trim();
+                }
+            }
+            
+            // 시간 계획 파싱
+            if (currentSection === 'timeSchedule' && timeScheduleStart) {
+                // 헤더 행 건너뛰기
+                if (firstCell === '구분') {
+                    continue;
+                }
+                
+                // 빈 행이면 시간 계획 섹션 종료
+                if (!firstCell) {
+                    timeScheduleStart = false;
+                    continue;
+                }
+                
+                seminarData.timeSchedule.push({
+                    type: firstCell,
+                    content: row[1] ? String(row[1]).trim() : '',
+                    time: row[2] ? String(row[2]).trim() : '',
+                    responsible: row[3] ? String(row[3]).trim() : ''
+                });
+            }
+            
+            // 참석자 명단 파싱
+            if (currentSection === 'attendeeList' && attendeeListStart) {
+                // 헤더 행 건너뛰기
+                if (firstCell === 'No') {
+                    continue;
+                }
+                
+                // 빈 행이면 참석자 명단 섹션 종료
+                if (!firstCell) {
+                    attendeeListStart = false;
+                    continue;
+                }
+                
+                seminarData.attendeeList.push({
+                    name: row[1] ? String(row[1]).trim() : '',
+                    position: row[2] ? String(row[2]).trim() : '',
+                    department: row[3] ? String(row[3]).trim() : '',
+                    work: row[4] ? String(row[4]).trim() : ''
+                });
+            }
+        }
+        
+        return seminarData;
+    }
+
+    // 엑셀 데이터를 폼에 로드
+    loadDataFromExcel(data) {
+        // 현재 데이터 업데이트
+        this.currentData = data;
+        this.currentDocumentId = null; // 새 데이터이므로 ID 초기화
+        
+        // 폼 필드 업데이트
+        this.populateForm();
     }
 
     // 일괄삭제 메서드 (모든 데이터 삭제)
