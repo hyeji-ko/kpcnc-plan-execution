@@ -1092,7 +1092,7 @@ class SeminarPlanningApp {
         data.forEach((item, index) => {
             const row = document.createElement('tr');
             row.className = 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer transition-all duration-200 group';
-            row.onclick = () => this.loadSeminarDetail(item.id);
+            row.onclick = () => this.loadSeminarDetailByKey(item.session, item.datetime);
             
             // 모바일 호환성을 위한 데이터 처리
             const session = this.ensureStringValue(item.session) || '미입력';
@@ -1145,7 +1145,71 @@ class SeminarPlanningApp {
         });
     }
 
-    // 세미나 상세 정보 로드
+    // 회차_일시 키값으로 세미나 상세 정보 로드
+    async loadSeminarDetailByKey(session, datetime) {
+        try {
+            this.showLoading(true);
+            console.log('🔍 세미나 상세 정보 로드 시작, 회차:', session, '일시:', datetime);
+            
+            // 회차_일시 키값 생성
+            const keyValue = `${session}_${datetime}`;
+            
+            // 키값으로 기존 데이터 찾기
+            const existingData = await this.findExistingDataByKey(keyValue);
+            console.log('📊 조회 결과:', existingData);
+            
+            if (existingData) {
+                // 모달 닫기
+                this.closeSearchModal();
+                
+                // 데이터 유효성 검사 및 정규화
+                const normalizedData = {
+                    ...existingData.data,
+                    session: this.ensureStringValue(existingData.data.session),
+                    objective: this.ensureStringValue(existingData.data.objective),
+                    datetime: this.ensureStringValue(existingData.data.datetime),
+                    location: this.ensureStringValue(existingData.data.location),
+                    attendees: this.ensureStringValue(existingData.data.attendees),
+                    timeSchedule: Array.isArray(existingData.data.timeSchedule) ? existingData.data.timeSchedule.map(item => ({
+                        type: this.ensureStringValue(item.type),
+                        content: this.ensureStringValue(item.content),
+                        time: this.ensureStringValue(item.time),
+                        responsible: this.ensureStringValue(item.responsible)
+                    })) : [],
+                    attendeeList: Array.isArray(existingData.data.attendeeList) ? existingData.data.attendeeList.map(item => ({
+                        name: this.ensureStringValue(item.name),
+                        position: this.ensureStringValue(item.position),
+                        department: this.ensureStringValue(item.department),
+                        work: this.ensureStringValue(item.work)
+                    })) : []
+                };
+                
+                console.log('📋 정규화된 세미나 데이터:', normalizedData);
+                console.log('📋 시간 계획 데이터:', normalizedData.timeSchedule);
+                console.log('📋 참석자 데이터:', normalizedData.attendeeList);
+                
+                // 메인 화면에 데이터 로드
+                this.currentData = normalizedData;
+                this.currentDocumentId = existingData.id; // 찾은 데이터의 ID 사용
+                console.log('📋 currentData 설정 완료:', this.currentData);
+                
+                this.populateForm();
+                console.log('📋 폼 채우기 완료');
+                
+                this.showSuccessToast(`${session} 세미나 계획을 불러왔습니다.`);
+            } else {
+                console.error('❌ 세미나 조회 실패: 해당 회차와 일시의 데이터를 찾을 수 없습니다.');
+                this.showErrorToast('해당 회차와 일시의 세미나 계획을 찾을 수 없습니다.');
+            }
+        } catch (error) {
+            console.error('❌ 상세 정보 로드 오류:', error);
+            this.showErrorToast('상세 정보 로드 중 오류가 발생했습니다.');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // 세미나 상세 정보 로드 (기존 ID 기반 - 호환성 유지)
     async loadSeminarDetail(id) {
         try {
             this.showLoading(true);
@@ -2406,7 +2470,11 @@ class SeminarPlanningApp {
             // 엑셀 워크북 생성
             const wb = XLSX.utils.book_new();
             
-            // 각 세미나 데이터를 시트로 추가
+            // 업로드 가능한 형식으로 단일 시트 생성
+            const uploadableSheet = this.createUploadableExcelSheet(allData);
+            XLSX.utils.book_append_sheet(wb, uploadableSheet, '전체데이터');
+            
+            // 각 세미나 데이터를 개별 시트로 추가 (상세 보기용)
             allData.forEach((seminar, index) => {
                 const sheetName = `세미나${index + 1}`;
                 const ws = this.createExcelSheet(seminar);
@@ -2437,7 +2505,7 @@ class SeminarPlanningApp {
         }
     }
     
-    // 개별 세미나 데이터를 엑셀 시트로 변환
+    // 개별 세미나 데이터를 엑셀 시트로 변환 (업로드 가능한 형식)
     createExcelSheet(seminar) {
         const data = [];
         
@@ -2485,6 +2553,68 @@ class SeminarPlanningApp {
                 ]);
             });
         }
+        
+        return XLSX.utils.aoa_to_sheet(data);
+    }
+    
+    // 업로드 가능한 형식으로 엑셀 시트 생성 (단일 시트)
+    createUploadableExcelSheet(allData) {
+        const data = [];
+        
+        // 각 세미나 데이터를 순차적으로 추가
+        allData.forEach((seminar, seminarIndex) => {
+            // 세미나 구분선
+            if (seminarIndex > 0) {
+                data.push([]);
+                data.push(['='.repeat(50)]);
+                data.push([]);
+            }
+            
+            // 헤더
+            data.push(['전사 신기술 세미나 실행계획']);
+            data.push([]);
+            
+            // 기본 정보
+            data.push(['1. 기본 정보']);
+            data.push(['회차', seminar.session || '']);
+            data.push(['목표', seminar.objective || '']);
+            data.push(['일시', seminar.datetime || '']);
+            data.push(['장소', seminar.location || '']);
+            data.push(['참석 대상', seminar.attendees || '']);
+            data.push([]);
+            
+            // 시간 계획
+            if (seminar.timeSchedule && seminar.timeSchedule.length > 0) {
+                data.push(['2. 시간 계획']);
+                data.push(['구분', '주요 내용', '시간', '담당']);
+                
+                seminar.timeSchedule.forEach(item => {
+                    data.push([
+                        item.type || '',
+                        item.content || '',
+                        item.time || '',
+                        item.responsible || ''
+                    ]);
+                });
+                data.push([]);
+            }
+            
+            // 참석자 명단
+            if (seminar.attendeeList && seminar.attendeeList.length > 0) {
+                data.push(['3. 참석자 명단']);
+                data.push(['No', '성명', '직급', '소속', '업무']);
+                
+                seminar.attendeeList.forEach((item, index) => {
+                    data.push([
+                        index + 1,
+                        item.name || '',
+                        item.position || '',
+                        item.department || '',
+                        item.work || ''
+                    ]);
+                });
+            }
+        });
         
         return XLSX.utils.aoa_to_sheet(data);
     }
@@ -2546,9 +2676,20 @@ class SeminarPlanningApp {
             const data = await this.readExcelFile(file);
             
             if (data) {
-                // 데이터를 현재 폼에 로드
-                this.loadDataFromExcel(data);
-                this.showSuccessToast('엑셀 파일이 성공적으로 업로드되었습니다.');
+                // 여러 세미나 데이터인지 확인
+                const seminars = this.parseMultipleExcelData(data);
+                
+                if (seminars.length > 1) {
+                    // 여러 세미나 데이터인 경우 일괄 저장
+                    await this.saveMultipleSeminars(seminars);
+                    this.showSuccessToast(`${seminars.length}개의 세미나 데이터가 성공적으로 업로드되었습니다.`);
+                } else if (seminars.length === 1) {
+                    // 단일 세미나 데이터인 경우 현재 폼에 로드
+                    this.loadDataFromExcel(seminars[0]);
+                    this.showSuccessToast('엑셀 파일이 성공적으로 업로드되었습니다.');
+                } else {
+                    this.showErrorToast('유효한 세미나 데이터를 찾을 수 없습니다.');
+                }
             } else {
                 this.showErrorToast('엑셀 파일을 읽는데 실패했습니다.');
             }
@@ -2592,7 +2733,7 @@ class SeminarPlanningApp {
         });
     }
 
-    // 엑셀 데이터 파싱
+    // 엑셀 데이터 파싱 (단일 세미나)
     parseExcelData(data) {
         const seminarData = {
             session: '',
@@ -2688,6 +2829,173 @@ class SeminarPlanningApp {
         }
         
         return seminarData;
+    }
+    
+    // 엑셀 데이터 파싱 (여러 세미나 - 업로드용)
+    parseMultipleExcelData(data) {
+        const seminars = [];
+        let currentSeminar = null;
+        let currentSection = '';
+        let timeScheduleStart = false;
+        let attendeeListStart = false;
+        
+        for (let i = 0; i < data.length; i++) {
+            const row = data[i];
+            if (!row || row.length === 0) continue;
+            
+            const firstCell = row[0] ? String(row[0]).trim() : '';
+            
+            // 새로운 세미나 시작 (구분선 또는 헤더)
+            if (firstCell === '='.repeat(50) || firstCell === '전사 신기술 세미나 실행계획') {
+                if (currentSeminar && currentSeminar.session) {
+                    seminars.push(currentSeminar);
+                }
+                currentSeminar = {
+                    session: '',
+                    objective: '',
+                    datetime: '',
+                    location: '',
+                    attendees: '',
+                    timeSchedule: [],
+                    attendeeList: []
+                };
+                currentSection = '';
+                timeScheduleStart = false;
+                attendeeListStart = false;
+                continue;
+            }
+            
+            if (!currentSeminar) continue;
+            
+            // 섹션 구분
+            if (firstCell.includes('1. 기본 정보')) {
+                currentSection = 'basic';
+                continue;
+            } else if (firstCell.includes('2. 시간 계획')) {
+                currentSection = 'timeSchedule';
+                timeScheduleStart = true;
+                continue;
+            } else if (firstCell.includes('3. 참석자 명단')) {
+                currentSection = 'attendeeList';
+                attendeeListStart = true;
+                timeScheduleStart = false;
+                continue;
+            }
+            
+            // 기본 정보 파싱
+            if (currentSection === 'basic') {
+                if (firstCell === '회차' && row[1]) {
+                    currentSeminar.session = String(row[1]).trim();
+                } else if (firstCell === '목표' && row[1]) {
+                    currentSeminar.objective = String(row[1]).trim();
+                } else if (firstCell === '일시' && row[1]) {
+                    currentSeminar.datetime = String(row[1]).trim();
+                } else if (firstCell === '장소' && row[1]) {
+                    currentSeminar.location = String(row[1]).trim();
+                } else if (firstCell === '참석 대상' && row[1]) {
+                    currentSeminar.attendees = String(row[1]).trim();
+                }
+            }
+            
+            // 시간 계획 파싱
+            if (currentSection === 'timeSchedule' && timeScheduleStart) {
+                if (firstCell === '구분') continue;
+                if (!firstCell) {
+                    timeScheduleStart = false;
+                    continue;
+                }
+                
+                currentSeminar.timeSchedule.push({
+                    type: firstCell,
+                    content: row[1] ? String(row[1]).trim() : '',
+                    time: row[2] ? String(row[2]).trim() : '',
+                    responsible: row[3] ? String(row[3]).trim() : ''
+                });
+            }
+            
+            // 참석자 명단 파싱
+            if (currentSection === 'attendeeList' && attendeeListStart) {
+                if (firstCell === 'No') continue;
+                if (!firstCell) {
+                    attendeeListStart = false;
+                    continue;
+                }
+                
+                currentSeminar.attendeeList.push({
+                    name: row[1] ? String(row[1]).trim() : '',
+                    position: row[2] ? String(row[2]).trim() : '',
+                    department: row[3] ? String(row[3]).trim() : '',
+                    work: row[4] ? String(row[4]).trim() : ''
+                });
+            }
+        }
+        
+        // 마지막 세미나 추가
+        if (currentSeminar && currentSeminar.session) {
+            seminars.push(currentSeminar);
+        }
+        
+        return seminars;
+    }
+
+    // 여러 세미나 데이터 일괄 저장
+    async saveMultipleSeminars(seminars) {
+        try {
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const seminar of seminars) {
+                try {
+                    // 회차와 일시가 모두 있는지 확인
+                    if (!seminar.session || !seminar.datetime) {
+                        console.warn('회차 또는 일시가 없는 세미나 데이터 건너뛰기:', seminar);
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    // 회차 + 일시를 키값으로 사용
+                    const keyValue = `${seminar.session}_${seminar.datetime}`;
+                    
+                    // 기존 데이터에서 동일한 키값을 가진 데이터 찾기
+                    const existingData = await this.findExistingDataByKey(keyValue);
+                    
+                    let result;
+                    
+                    if (existingData) {
+                        // 기존 데이터가 있으면 수정
+                        if (useLocalStorage) {
+                            result = this.saveToLocalStorage(seminar, existingData.id);
+                        } else {
+                            result = await updateData(existingData.id, seminar);
+                        }
+                    } else {
+                        // 기존 데이터가 없으면 새로 등록
+                        if (useLocalStorage) {
+                            result = this.saveToLocalStorage(seminar);
+                        } else {
+                            result = await saveData(seminar);
+                        }
+                    }
+                    
+                    if (result.success) {
+                        successCount++;
+                        console.log(`세미나 데이터 저장 성공: ${seminar.session}`);
+                    } else {
+                        errorCount++;
+                        console.error(`세미나 데이터 저장 실패: ${seminar.session}`, result.message);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    console.error(`세미나 데이터 저장 오류: ${seminar.session}`, error);
+                }
+            }
+            
+            console.log(`일괄 저장 완료: 성공 ${successCount}건, 실패 ${errorCount}건`);
+            
+        } catch (error) {
+            console.error('여러 세미나 데이터 일괄 저장 오류:', error);
+            throw error;
+        }
     }
 
     // 엑셀 데이터를 폼에 로드
