@@ -551,33 +551,49 @@ class SeminarPlanningApp {
                     if (inputElement) inputElement.classList.add('hidden');
                 }
             }
+            
+            // 직급 필드에서 "직접입력" 선택 시 입력 필드 표시/숨김 처리
+            if (field === 'position') {
+                this.toggleCustomPositionInput(index, value);
+            }
+            
+            // 업무 필드에서 "직접입력" 선택 시 입력 필드 표시/숨김 처리
+            if (field === 'work') {
+                this.toggleCustomWorkInput(index, value);
+            }
         }
     }
     
     // 직접입력 필드 토글 (직급용)
     toggleCustomPositionInput(index, value) {
-        const customInput = document.querySelector(`[data-index="${index}"][data-field="position-custom"]`);
-        if (customInput) {
-            if (value === '직접입력') {
-                customInput.classList.remove('hidden');
-                customInput.focus();
-            } else {
-                customInput.classList.add('hidden');
-                customInput.value = '';
+        const row = document.querySelector(`#attendeeTableBody tr:nth-child(${index + 1})`);
+        if (row) {
+            const customInput = row.querySelector('input[data-field="position-custom"]');
+            if (customInput) {
+                if (value === '직접입력') {
+                    customInput.classList.remove('hidden');
+                    customInput.focus();
+                } else {
+                    customInput.classList.add('hidden');
+                    customInput.value = '';
+                }
             }
         }
     }
     
     // 직접입력 필드 토글 (업무용)
     toggleCustomWorkInput(index, value) {
-        const customInput = document.querySelector(`[data-index="${index}"][data-field="work-custom"]`);
-        if (customInput) {
-            if (value === '직접입력') {
-                customInput.classList.remove('hidden');
-                customInput.focus();
-            } else {
-                customInput.classList.add('hidden');
-                customInput.value = '';
+        const row = document.querySelector(`#attendeeTableBody tr:nth-child(${index + 1})`);
+        if (row) {
+            const customInput = row.querySelector('input[data-field="work-custom"]');
+            if (customInput) {
+                if (value === '직접입력') {
+                    customInput.classList.remove('hidden');
+                    customInput.focus();
+                } else {
+                    customInput.classList.add('hidden');
+                    customInput.value = '';
+                }
             }
         }
     }
