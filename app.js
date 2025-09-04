@@ -726,29 +726,149 @@ class SeminarPlanningApp {
             // 현재 폼 데이터 수집
             this.collectFormData();
             
+            // 회차와 일시가 모두 입력되었는지 확인
+            if (!this.currentData.session || !this.currentData.datetime) {
+                this.showErrorToast('회차와 일시를 모두 입력해주세요.');
+                return;
+            }
+            
+            // 회차 + 일시를 키값으로 사용
+            const keyValue = `${this.currentData.session}_${this.currentData.datetime}`;
+            
+            // 기존 데이터에서 동일한 키값을 가진 데이터 찾기
+            const existingData = await this.findExistingDataByKey(keyValue);
+            
             let result;
             
-            if (this.currentDocumentId) {
-                // 기존 문서 업데이트 (회차와 일시가 동일하든 다르든 수정)
-                result = await updateData(this.currentDocumentId, this.currentData);
+            if (existingData) {
+                // 기존 데이터가 있으면 수정
+                console.log('기존 데이터 발견, 수정 처리:', existingData.id);
+                
+                if (useLocalStorage) {
+                    result = this.saveToLocalStorage(this.currentData, existingData.id);
+                } else {
+                    result = await updateData(existingData.id, this.currentData);
+                }
+                
+                if (result.success) {
+                    this.currentDocumentId = existingData.id;
+                    this.showSuccessToast(`${this.currentData.session} 세미나 데이터가 수정되었습니다.`);
+                }
             } else {
-                // 새 문서 생성
-                result = await saveData(this.currentData);
+                // 기존 데이터가 없으면 새로 등록
+                console.log('새 데이터 등록 처리');
+                
+                if (useLocalStorage) {
+                    result = this.saveToLocalStorage(this.currentData);
+                } else {
+                    result = await saveData(this.currentData);
+                }
+                
                 if (result.success && result.id) {
-                    this.currentDocumentId = result.id; // 새로 생성된 문서 ID 저장
+                    this.currentDocumentId = result.id;
+                    this.showSuccessToast(`${this.currentData.session} 세미나 데이터가 새로 등록되었습니다.`);
                 }
             }
             
-            if (result.success) {
-                this.showSuccessToast(result.message);
-            } else {
+            if (!result.success) {
                 this.showErrorToast(result.message);
             }
+            
         } catch (error) {
             console.error('저장 오류:', error);
             this.showErrorToast('저장 중 오류가 발생했습니다.');
         } finally {
             this.showLoading(false);
+        }
+    }
+    
+    // 회차 + 일시 키값으로 기존 데이터 찾기
+    async findExistingDataByKey(keyValue) {
+        try {
+            if (useLocalStorage) {
+                // 로컬 스토리지에서 모든 세미나 데이터 찾기
+                const allData = this.getAllLocalStorageData();
+                
+                for (const item of allData) {
+                    if (item.data.session && item.data.datetime) {
+                        const existingKey = `${item.data.session}_${item.data.datetime}`;
+                        if (existingKey === keyValue) {
+                            return { id: item.id, data: item.data };
+                        }
+                    }
+                }
+                return null;
+            } else {
+                // Firebase에서 데이터 찾기
+                const snapshot = await db.collection('seminarPlans').get();
+                
+                for (const doc of snapshot.docs) {
+                    const data = doc.data();
+                    if (data.session && data.datetime) {
+                        const existingKey = `${data.session}_${data.datetime}`;
+                        if (existingKey === keyValue) {
+                            return { id: doc.id, data: data };
+                        }
+                    }
+                }
+                return null;
+            }
+        } catch (error) {
+            console.error('기존 데이터 찾기 오류:', error);
+            return null;
+        }
+    }
+    
+    // 로컬 스토리지에서 모든 세미나 데이터 가져오기
+    getAllLocalStorageData() {
+        try {
+            const data = localStorage.getItem('seminarPlans');
+            if (data) {
+                return JSON.parse(data);
+            }
+            return [];
+        } catch (error) {
+            console.error('로컬 스토리지 데이터 읽기 오류:', error);
+            return [];
+        }
+    }
+    
+    // 로컬 스토리지에 세미나 데이터 저장/업데이트
+    saveToLocalStorage(seminarData, id = null) {
+        try {
+            let allData = this.getAllLocalStorageData();
+            
+            if (id) {
+                // 기존 데이터 업데이트
+                const index = allData.findIndex(item => item.id === id);
+                if (index !== -1) {
+                    allData[index].data = seminarData;
+                    allData[index].updatedAt = new Date().toISOString();
+                } else {
+                    // ID가 있지만 데이터를 찾을 수 없는 경우 새로 추가
+                    allData.push({
+                        id: id,
+                        data: seminarData,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    });
+                }
+            } else {
+                // 새 데이터 추가
+                const newId = 'local_' + Date.now();
+                allData.push({
+                    id: newId,
+                    data: seminarData,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            }
+            
+            localStorage.setItem('seminarPlans', JSON.stringify(allData));
+            return { success: true, id: id || 'local_' + Date.now() };
+        } catch (error) {
+            console.error('로컬 스토리지 저장 오류:', error);
+            return { success: false, message: error.message };
         }
     }
 
@@ -1090,13 +1210,14 @@ class SeminarPlanningApp {
     async getSeminarById(id) {
         try {
             if (useLocalStorage) {
-                const data = localStorage.getItem('seminarPlan');
-                if (data) {
-                    const parsedData = JSON.parse(data);
-                    console.log('📁 로컬 스토리지에서 로드된 데이터:', parsedData);
-                    return { success: true, data: parsedData, id: 'local' };
+                const allData = this.getAllLocalStorageData();
+                const seminar = allData.find(item => item.id === id);
+                
+                if (seminar) {
+                    console.log('📁 로컬 스토리지에서 로드된 데이터:', seminar.data);
+                    return { success: true, data: seminar.data, id: seminar.id };
                 } else {
-                    return { success: false, message: '저장된 데이터가 없습니다.' };
+                    return { success: false, message: '해당 세미나 계획을 찾을 수 없습니다.' };
                 }
             } else {
                 // Firebase에서 특정 문서 조회
@@ -2592,7 +2713,7 @@ class SeminarPlanningApp {
             // Firebase에서 모든 데이터 삭제
             if (useLocalStorage) {
                 // 로컬 스토리지에서 모든 데이터 삭제
-                localStorage.removeItem('seminarPlan');
+                localStorage.removeItem('seminarPlans');
                 this.showSuccessToast('모든 데이터가 성공적으로 삭제되었습니다.');
             } else {
                 // Firebase에서 모든 문서 삭제
