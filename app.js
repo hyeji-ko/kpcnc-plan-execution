@@ -293,9 +293,20 @@ class SeminarPlanningApp {
                            data-index="0" data-field="name">
                 </td>
                 <td class="px-4 py-3 border-b">
-                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                           placeholder="직급을 입력하세요" 
-                           data-index="0" data-field="position">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            data-index="0" data-field="position">
+                        <option value="">선택하세요</option>
+                        <option value="상무">상무</option>
+                        <option value="선임">선임</option>
+                        <option value="이사">이사</option>
+                        <option value="전무">전무</option>
+                        <option value="책임">책임</option>
+                        <option value="팀장">팀장</option>
+                        <option value="직접입력">직접입력</option>
+                    </select>
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                           placeholder="직급을 직접 입력하세요" 
+                           data-index="0" data-field="position-custom">
                 </td>
                 <td class="px-4 py-3 border-b">
                     <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
@@ -303,8 +314,8 @@ class SeminarPlanningApp {
                         <option value="">선택하세요</option>
                         <option value="SI사업본부">SI사업본부</option>
                         <option value="AI사업본부">AI사업본부</option>
-                        <option value="전략사업본부">전략사업본부</option>
                         <option value="경영관리본부">경영관리본부</option>
+                        <option value="전략사업본부">전략사업본부</option>
                         <option value="직접입력">직접입력</option>
                     </select>
                     <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
@@ -313,9 +324,26 @@ class SeminarPlanningApp {
                            id="departmentInput_0">
                 </td>
                 <td class="px-4 py-3 border-b">
-                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                           placeholder="업무를 입력하세요" 
-                           data-index="0" data-field="work">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            data-index="0" data-field="work">
+                        <option value="">선택하세요</option>
+                        <option value="담당임원">담당임원</option>
+                        <option value="본부장">본부장</option>
+                        <option value="기술지원팀장">기술지원팀장</option>
+                        <option value="담당간부">담당간부</option>
+                        <option value="담당자">담당자</option>
+                        <option value="영업대표">영업대표</option>
+                        <option value="프레임워크사업팀">프레임워크사업팀</option>
+                        <option value="SK증권 SM">SK증권 SM</option>
+                        <option value="라이나 생명 SM">라이나 생명 SM</option>
+                        <option value="산업은행 SM">산업은행 SM</option>
+                        <option value="삼성카드 SM">삼성카드 SM</option>
+                        <option value="PM">PM</option>
+                        <option value="직접입력">직접입력</option>
+                    </select>
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                           placeholder="업무를 직접 입력하세요" 
+                           data-index="0" data-field="work-custom">
                 </td>
                 <td class="px-4 py-3 border-b">
                     <button onclick="app.removeAttendeeRow(0)" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
@@ -406,9 +434,20 @@ class SeminarPlanningApp {
                        data-index="${rowCount}" data-field="name">
             </td>
             <td class="px-4 py-3 border-b">
-                <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                       placeholder="직급을 입력하세요" 
-                       data-index="${rowCount}" data-field="position">
+                <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                        data-index="${rowCount}" data-field="position">
+                    <option value="">선택하세요</option>
+                    <option value="상무">상무</option>
+                    <option value="선임">선임</option>
+                    <option value="이사">이사</option>
+                    <option value="전무">전무</option>
+                    <option value="책임">책임</option>
+                    <option value="팀장">팀장</option>
+                    <option value="직접입력">직접입력</option>
+                </select>
+                <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                       placeholder="직급을 직접 입력하세요" 
+                       data-index="${rowCount}" data-field="position-custom">
             </td>
             <td class="px-4 py-3 border-b">
                 <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
@@ -426,9 +465,26 @@ class SeminarPlanningApp {
                        id="departmentInput_${rowCount}">
             </td>
             <td class="px-4 py-3 border-b">
-                <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                       placeholder="업무를 입력하세요" 
-                       data-index="${rowCount}" data-field="work">
+                <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                        data-index="${rowCount}" data-field="work">
+                    <option value="">선택하세요</option>
+                    <option value="담당임원">담당임원</option>
+                    <option value="본부장">본부장</option>
+                    <option value="기술지원팀장">기술지원팀장</option>
+                    <option value="담당간부">담당간부</option>
+                    <option value="담당자">담당자</option>
+                    <option value="영업대표">영업대표</option>
+                    <option value="프레임워크사업팀">프레임워크사업팀</option>
+                    <option value="SK증권 SM">SK증권 SM</option>
+                    <option value="라이나 생명 SM">라이나 생명 SM</option>
+                    <option value="산업은행 SM">산업은행 SM</option>
+                    <option value="삼성카드 SM">삼성카드 SM</option>
+                    <option value="PM">PM</option>
+                    <option value="직접입력">직접입력</option>
+                </select>
+                <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                       placeholder="업무를 직접 입력하세요" 
+                       data-index="${rowCount}" data-field="work-custom">
             </td>
             <td class="px-4 py-3 border-b">
                 <button onclick="app.removeAttendeeRow(${rowCount})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
@@ -479,6 +535,34 @@ class SeminarPlanningApp {
                     if (selectElement) selectElement.style.display = 'block';
                     if (inputElement) inputElement.classList.add('hidden');
                 }
+            }
+        }
+    }
+    
+    // 직접입력 필드 토글 (직급용)
+    toggleCustomPositionInput(index, value) {
+        const customInput = document.querySelector(`[data-index="${index}"][data-field="position-custom"]`);
+        if (customInput) {
+            if (value === '직접입력') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.value = '';
+            }
+        }
+    }
+    
+    // 직접입력 필드 토글 (업무용)
+    toggleCustomWorkInput(index, value) {
+        const customInput = document.querySelector(`[data-index="${index}"][data-field="work-custom"]`);
+        if (customInput) {
+            if (value === '직접입력') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.value = '';
             }
         }
     }
@@ -673,9 +757,21 @@ class SeminarPlanningApp {
                            onchange="app.updateAttendeeList(${index}, 'name', this.value)">
                 </td>
                 <td class="px-4 py-3 border-b">
-                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                           placeholder="직급을 입력하세요" 
-                           onchange="app.updateAttendeeList(${index}, 'position', this.value)">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            onchange="app.updateAttendeeList(${index}, 'position', this.value); app.toggleCustomPositionInput(${index}, this.value)">
+                        <option value="">선택하세요</option>
+                        <option value="상무">상무</option>
+                        <option value="선임">선임</option>
+                        <option value="이사">이사</option>
+                        <option value="전무">전무</option>
+                        <option value="책임">책임</option>
+                        <option value="팀장">팀장</option>
+                        <option value="직접입력">직접입력</option>
+                    </select>
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                           placeholder="직급을 직접 입력하세요" 
+                           onchange="app.updateAttendeeList(${index}, 'position', this.value)"
+                           data-index="${index}" data-field="position-custom">
                 </td>
                 <td class="px-4 py-3 border-b">
                     <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
@@ -683,8 +779,8 @@ class SeminarPlanningApp {
                         <option value="">선택하세요</option>
                         <option value="SI사업본부">SI사업본부</option>
                         <option value="AI사업본부">AI사업본부</option>
-                        <option value="전략사업본부">전략사업본부</option>
                         <option value="경영관리본부">경영관리본부</option>
+                        <option value="전략사업본부">전략사업본부</option>
                         <option value="직접입력">직접입력</option>
                     </select>
                     <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
@@ -693,9 +789,27 @@ class SeminarPlanningApp {
                            id="departmentInput_${index}">
                 </td>
                 <td class="px-4 py-3 border-b">
-                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                           placeholder="업무를 입력하세요" 
-                           onchange="app.updateAttendeeList(${index}, 'work', this.value)">
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            onchange="app.updateAttendeeList(${index}, 'work', this.value); app.toggleCustomWorkInput(${index}, this.value)">
+                        <option value="">선택하세요</option>
+                        <option value="담당임원">담당임원</option>
+                        <option value="본부장">본부장</option>
+                        <option value="기술지원팀장">기술지원팀장</option>
+                        <option value="담당간부">담당간부</option>
+                        <option value="담당자">담당자</option>
+                        <option value="영업대표">영업대표</option>
+                        <option value="프레임워크사업팀">프레임워크사업팀</option>
+                        <option value="SK증권 SM">SK증권 SM</option>
+                        <option value="라이나 생명 SM">라이나 생명 SM</option>
+                        <option value="산업은행 SM">산업은행 SM</option>
+                        <option value="삼성카드 SM">삼성카드 SM</option>
+                        <option value="PM">PM</option>
+                        <option value="직접입력">직접입력</option>
+                    </select>
+                    <input type="text" class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1 hidden" 
+                           placeholder="업무를 직접 입력하세요" 
+                           onchange="app.updateAttendeeList(${index}, 'work', this.value)"
+                           data-index="${index}" data-field="work-custom">
                 </td>
                 <td class="px-4 py-3 border-b">
                     <button onclick="app.removeAttendeeRow(${index})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition-colors duration-200">
@@ -714,14 +828,33 @@ class SeminarPlanningApp {
                 inputs[0].value = item.name || '';
                 inputs[0].setAttribute('value', item.name || '');
             }
-            if (inputs[1]) {
-                inputs[1].value = item.position || '';
-                inputs[1].setAttribute('value', item.position || '');
+            
+            // 직급 필드 처리
+            if (item.position) {
+                const positionOptions = ['상무', '선임', '이사', '전무', '책임', '팀장'];
+                const positionSelect = row.querySelector('select[data-field="position"]');
+                const positionCustomInput = row.querySelector('input[data-field="position-custom"]');
+                
+                if (positionOptions.includes(item.position)) {
+                    // 미리 정의된 옵션인 경우
+                    if (positionSelect) {
+                        positionSelect.value = item.position;
+                    }
+                } else {
+                    // 직접입력인 경우
+                    if (positionSelect) {
+                        positionSelect.value = '직접입력';
+                    }
+                    if (positionCustomInput) {
+                        positionCustomInput.value = item.position;
+                        positionCustomInput.classList.remove('hidden');
+                    }
+                }
             }
             
             // 소속 필드 처리
             if (item.department) {
-                const departmentOptions = ['SI사업본부', 'AI사업본부', '전략사업본부', '경영관리본부'];
+                const departmentOptions = ['SI사업본부', 'AI사업본부', '경영관리본부', '전략사업본부'];
                 if (departmentOptions.includes(item.department)) {
                     // 미리 정의된 옵션인 경우
                     if (select) {
@@ -747,9 +880,27 @@ class SeminarPlanningApp {
                 }
             }
             
-            if (inputs[3]) {
-                inputs[3].value = item.work || '';
-                inputs[3].setAttribute('value', item.work || '');
+            // 업무 필드 처리
+            if (item.work) {
+                const workOptions = ['담당임원', '본부장', '기술지원팀장', '담당간부', '담당자', '영업대표', '프레임워크사업팀', 'SK증권 SM', '라이나 생명 SM', '산업은행 SM', '삼성카드 SM', 'PM'];
+                const workSelect = row.querySelector('select[data-field="work"]');
+                const workCustomInput = row.querySelector('input[data-field="work-custom"]');
+                
+                if (workOptions.includes(item.work)) {
+                    // 미리 정의된 옵션인 경우
+                    if (workSelect) {
+                        workSelect.value = item.work;
+                    }
+                } else {
+                    // 직접입력인 경우
+                    if (workSelect) {
+                        workSelect.value = '직접입력';
+                    }
+                    if (workCustomInput) {
+                        workCustomInput.value = item.work;
+                        workCustomInput.classList.remove('hidden');
+                    }
+                }
             }
             
             // 이벤트 리스너 추가 (모바일 환경 고려)
@@ -1795,7 +1946,7 @@ class SeminarPlanningApp {
                     { text: '[별첨] 세미나 참석 명단', style: 'sectionHeader', margin: [0, 20, 0, 10] },
                     {
                         table: {
-                            widths: ['auto', '*', '*', '*', '*'],
+                            widths: [20, 'auto', 'auto', 'auto', '*'],
                             body: attendeeRows
                         }
                     }
