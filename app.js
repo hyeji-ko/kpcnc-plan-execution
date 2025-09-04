@@ -1365,21 +1365,21 @@ class SeminarPlanningApp {
             
             // 회차 배지 스타일
             const sessionBadge = session !== '미입력' ? 
-                `<span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200 min-w-[80px] justify-center">
+                `<span class="inline-flex items-center px-5 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200 min-w-[100px] justify-center">
                     <i class="fas fa-hashtag mr-2"></i>${this.escapeHtml(session)}
                 </span>` : 
-                `<span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-600 min-w-[80px] justify-center">
+                `<span class="inline-flex items-center px-5 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-600 min-w-[100px] justify-center">
                     <i class="fas fa-minus mr-2"></i>미입력
                 </span>`;
             
             row.innerHTML = `
-                <td class="px-6 py-4 w-32">
+                <td class="px-6 py-4 w-40">
                     ${sessionBadge}
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-4 py-4 w-48">
                     <div class="flex items-center space-x-2 group-hover:text-blue-600 transition-colors duration-200">
                         <i class="fas fa-calendar-alt text-blue-400 group-hover:text-blue-600"></i>
-                        <span class="font-medium">${this.escapeHtml(datetime)}</span>
+                        <span class="font-medium text-sm">${this.escapeHtml(datetime)}</span>
                     </div>
                 </td>
                 <td class="px-6 py-4">
