@@ -2677,10 +2677,12 @@ class SeminarPlanningApp {
             
             if (data) {
                 console.log('📁 엑셀 파일 읽기 성공, 데이터 길이:', data.length);
+                console.log('📊 원본 데이터 (처음 10행):', data.slice(0, 10));
                 
                 // 먼저 단일 세미나 형식으로 파싱 시도
                 const singleSeminar = this.parseExcelData(data);
                 console.log('📊 단일 세미나 파싱 결과:', singleSeminar);
+                console.log('📊 단일 세미나 유효성 검사 - 회차:', singleSeminar.session, '일시:', singleSeminar.datetime);
                 
                 // 단일 세미나가 유효한지 확인 (회차와 일시가 있는지)
                 if (singleSeminar.session && singleSeminar.datetime) {
@@ -2691,6 +2693,7 @@ class SeminarPlanningApp {
                     // 다중 세미나 형식으로 파싱 시도
                     console.log('🔄 다중 세미나 형식으로 파싱 시도');
                     const seminars = this.parseMultipleExcelData(data);
+                    console.log('📊 다중 세미나 파싱 결과:', seminars);
                     
                     if (seminars.length > 1) {
                         // 여러 세미나 데이터인 경우 일괄 저장
@@ -2704,6 +2707,8 @@ class SeminarPlanningApp {
                         this.showSuccessToast('엑셀 파일이 성공적으로 업로드되었습니다.');
                     } else {
                         console.error('❌ 유효한 세미나 데이터를 찾을 수 없음');
+                        console.error('❌ 단일 세미나 파싱 결과:', singleSeminar);
+                        console.error('❌ 다중 세미나 파싱 결과:', seminars);
                         this.showErrorToast('유효한 세미나 데이터를 찾을 수 없습니다. 파일 형식을 확인해주세요.');
                     }
                 }
@@ -2752,6 +2757,7 @@ class SeminarPlanningApp {
 
     // 엑셀 데이터 파싱 (단일 세미나)
     parseExcelData(data) {
+        console.log('📊 단일 세미나 파싱 시작, 데이터 길이:', data.length);
         const seminarData = {
             session: '',
             objective: '',
@@ -2772,18 +2778,26 @@ class SeminarPlanningApp {
             
             const firstCell = row[0] ? String(row[0]).trim() : '';
             
+            // 디버깅을 위한 로그 (처음 20행만)
+            if (i < 20) {
+                console.log(`단일 파싱 행 ${i}: "${firstCell}"`);
+            }
+            
             // 섹션 구분
             if (firstCell.includes('1. 기본 정보')) {
                 currentSection = 'basic';
+                console.log('📋 기본 정보 섹션 시작');
                 continue;
             } else if (firstCell.includes('2. 시간 계획')) {
                 currentSection = 'timeSchedule';
                 timeScheduleStart = true;
+                console.log('📋 시간 계획 섹션 시작');
                 continue;
             } else if (firstCell.includes('3. 참석자 명단')) {
                 currentSection = 'attendeeList';
                 attendeeListStart = true;
                 timeScheduleStart = false;
+                console.log('📋 참석자 명단 섹션 시작');
                 continue;
             }
             
@@ -2791,14 +2805,19 @@ class SeminarPlanningApp {
             if (currentSection === 'basic') {
                 if (firstCell === '회차' && row[1]) {
                     seminarData.session = String(row[1]).trim();
+                    console.log('📋 회차 파싱:', seminarData.session);
                 } else if (firstCell === '목표' && row[1]) {
                     seminarData.objective = String(row[1]).trim();
+                    console.log('📋 목표 파싱:', seminarData.objective);
                 } else if (firstCell === '일시' && row[1]) {
                     seminarData.datetime = String(row[1]).trim();
+                    console.log('📋 일시 파싱:', seminarData.datetime);
                 } else if (firstCell === '장소' && row[1]) {
                     seminarData.location = String(row[1]).trim();
+                    console.log('📋 장소 파싱:', seminarData.location);
                 } else if (firstCell === '참석 대상' && row[1]) {
                     seminarData.attendees = String(row[1]).trim();
+                    console.log('📋 참석 대상 파싱:', seminarData.attendees);
                 }
             }
             
@@ -2845,6 +2864,7 @@ class SeminarPlanningApp {
             }
         }
         
+        console.log('📊 단일 세미나 파싱 완료:', seminarData);
         return seminarData;
     }
     
@@ -2870,7 +2890,7 @@ class SeminarPlanningApp {
             }
             
             // 새로운 세미나 시작 (구분선 또는 헤더)
-            if (firstCell === '='.repeat(50) || (firstCell === '전사 신기술 세미나 실행계획' && isFirstSeminar)) {
+            if (firstCell === '='.repeat(50) || firstCell === '전사 신기술 세미나 실행계획') {
                 console.log('🆕 새로운 세미나 시작 감지:', firstCell);
                 if (currentSeminar && currentSeminar.session) {
                     seminars.push(currentSeminar);
