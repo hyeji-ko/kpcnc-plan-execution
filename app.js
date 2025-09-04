@@ -115,7 +115,7 @@ class SeminarPlanningApp {
         document.getElementById('deleteBtn').addEventListener('click', () => this.deleteData());
         
         // 일괄삭제 버튼
-        document.getElementById('bulkDeleteBtn').addEventListener('click', () => this.bulkDeleteData());
+        //document.getElementById('bulkDeleteBtn').addEventListener('click', () => this.bulkDeleteData());
         
         // 조회 버튼
         document.getElementById('loadBtn').addEventListener('click', () => this.showSearchModal());
@@ -128,12 +128,9 @@ class SeminarPlanningApp {
         
         // 내보내기 버튼들
         document.getElementById('exportPDF').addEventListener('click', () => this.exportToPDF());
-        document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
+        //document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
         
-        // 업로드 버튼
-        document.getElementById('uploadBtn').addEventListener('click', () => this.triggerFileUpload());
-        document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileUpload(e));
-                
+        
         // 입력 필드 변경 감지
         this.bindInputEvents();
     }
